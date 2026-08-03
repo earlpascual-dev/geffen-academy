@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geffen Academy — Study Hall</title>
+<style>
+  :root{
+    --purple-dark:#2e1f47;
+    --purple:#4a2f78;
+    --purple-mid:#6b46a8;
+    --purple-light:#9b74d1;
+    --violet-accent:#c9a6ec;
+    --green-dark:#24402b;
+    --green:#3f6b47;
+    --green-light:#6f9a6a;
+    --gold:#d8b458;
+    --gold-light:#f0d896;
+    --gold-dark:#a9822f;
+    --stone:#cdbfa0;
+    --parchment:#f4ecd8;
+    --parchment-dark:#e6d7ae;
+    --ink:#2a2216;
+    --ink-soft:#5a4d3a;
+    --sky-top:#2c2350;
+    --sky-bottom:#7fb3c2;
+    --danger:#a5432f;
+    --danger-light:#f3d9d2;
+    --success:#3d7a4f;
+    --success-light:#dcecdd;
+    --warn:#b8862f;
+    --warn-light:#f5e6c6;
+    --radius:10px;
+    --shadow:0 4px 14px rgba(20,10,35,0.35);
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(155,116,209,0.25), transparent 55%),
+      radial-gradient(ellipse at 85% 10%, rgba(127,179,194,0.25), transparent 50%),
+      linear-gradient(180deg, var(--sky-top) 0%, #4a3f74 22%, #5c7a5e 46%, var(--parchment) 60%);
+    min-height:100vh;
+  }
+  h1,h2,h3,h4{
+    font-family:"Palatino Linotype","Book Antiqua",Georgia,"Times New Roman",serif;
+    letter-spacing:0.03em;
+    color:var(--purple-dark);
+    margin:0 0 0.5em 0;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  .icon{width:1.1em;height:1.1em;vertical-align:-0.2em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+  /* ---------- Skyline header ---------- */
+  #skyline{
+    position:relative;
+    padding:22px 28px 60px;
+    overflow:hidden;
+  }
+  #skyline::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(180deg, transparent 60%, rgba(63,107,71,0.5) 100%);
+    pointer-events:none;
+  }
+  .towers{position:absolute; bottom:0; left:0; right:0; height:70px; display:flex; align-items:flex-end; gap:2px; opacity:0.55; pointer-events:none;}
+  .tower{background:var(--purple-dark); width:26px; border-radius:4px 4px 0 0; position:relative;}
+  .tower::after{content:"";position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:15px solid transparent; border-right:15px solid transparent; border-bottom:16px solid var(--violet-accent);}
+  .brand{position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;}
+  .brand-title{color:var(--gold-light); text-shadow:0 2px 6px rgba(0,0,0,0.5);}
+  .brand-title h1{color:var(--gold-light); font-size:1.9rem; margin-bottom:2px;}
+  .brand-title p{margin:0; color:var(--violet-accent); font-size:0.85rem; letter-spacing:0.08em; text-transform:uppercase;}
+  nav.tabs{display:flex; gap:8px; flex-wrap:wrap; position:relative; z-index:1;}
+  nav.tabs button{
+    display:flex; align-items:center; gap:6px;
+    background:rgba(244,236,216,0.12);
+    border:1px solid rgba(240,216,150,0.4);
+    color:var(--gold-light);
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:0.9rem;
+    transition:background 0.15s, transform 0.15s;
+  }
+  nav.tabs button:hover{background:rgba(244,236,216,0.25);}
+  nav.tabs button.active{background:var(--gold); color:var(--purple-dark); border-color:var(--gold);}
+
+  /* ---------- Main layout ---------- */
+  #app{position:relative; z-index:1; max-width:1180px; margin:-36px auto 60px; padding:0 24px;}
+  .panel{
+    background:var(--parchment);
+    border:1px solid var(--gold-dark);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:24px;
+  }
+  .panel + .panel{margin-top:20px;}
+  .ornate{
+    position:relative;
+    border-image: none;
+  }
+  .ornate::before{
+    content:"";
+    position:absolute; inset:5px;
+    border:1px solid var(--stone);
+    border-radius:6px;
+    pointer-events:none;
+  }
+
+  /* ---------- Home ---------- */
+  .hero{
+    background:linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 60%, var(--green) 130%);
+    color:var(--parchment);
+    text-align:center;
+    padding:36px 24px;
+  }
+  .hero h2{color:var(--gold-light); font-size:1.6rem;}
+  .hero p{color:var(--violet-accent); max-width:640px; margin:8px auto 0; line-height:1.5;}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; margin-top:20px;}
+  .subject-card{
+    background:var(--parchment); border:1px solid var(--gold-dark); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+    transition:transform 0.15s;
+  }
+  .subject-card.clickable:hover{transform:translateY(-3px);}
+  .subject-card h3{color:var(--purple); font-size:1.1rem; display:flex; align-items:center; gap:8px;}
+  .subject-card p{color:var(--ink-soft); font-size:0.88rem; line-height:1.4; min-height:3em;}
+  .subject-card .stats{display:flex; gap:14px; font-size:0.78rem; color:var(--green-dark); margin-top:8px;}
+  .subject-card.disabled{opacity:0.55; filter:grayscale(0.4);}
+  .ribbon{
+    position:absolute; top:10px; right:-28px; transform:rotate(40deg);
+    background:var(--gold-dark); color:var(--parchment); font-size:0.65rem; letter-spacing:0.08em;
+    padding:3px 34px; box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  }
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; justify-content:center;
+    padding:9px 18px; border-radius:8px; border:1px solid var(--purple);
+    background:var(--purple); color:var(--parchment); font-size:0.9rem; font-weight:600;
+    transition:background 0.15s, transform 0.1s;
+  }
+  .btn:hover{background:var(--purple-mid);}
+  .btn:active{transform:scale(0.98);}
+  .btn.gold{background:var(--gold); border-color:var(--gold-dark); color:var(--purple-dark);}
+  .btn.gold:hover{background:var(--gold-light);}
+  .btn.outline{background:transparent; color:var(--purple); border-color:var(--purple);}
+  .btn.outline:hover{background:rgba(74,47,120,0.08);}
+  .btn.danger{background:var(--danger); border-color:#7c2f1f;}
+  .btn.danger:hover{background:#bf5236;}
+  .btn:disabled{opacity:0.45; cursor:not-allowed;}
+  .btn.small{padding:6px 12px; font-size:0.8rem;}
+
+  .progress-section h3{color:var(--purple);}
+  table.history{width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px;}
+  table.history th, table.history td{padding:7px 10px; text-align:left; border-bottom:1px solid var(--parchment-dark);}
+  table.history th{color:var(--purple); font-family:"Palatino Linotype",serif;}
+  .pill{padding:2px 9px; border-radius:20px; font-size:0.72rem; font-weight:700;}
+  .pill.pass{background:var(--success-light); color:var(--success);}
+  .pill.fail{background:var(--danger-light); color:var(--danger);}
+  .stat-row{display:flex; gap:24px; flex-wrap:wrap; margin:10px 0 18px;}
+  .stat-box{background:var(--parchment-dark); border-radius:8px; padding:10px 18px; text-align:center; min-width:100px;}
+  .stat-box b{display:block; font-size:1.4rem; color:var(--purple);}
+  .stat-box span{font-size:0.72rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.05em;}
+
+  /* ---------- Study view ---------- */
+  .study-layout{display:grid; grid-template-columns:220px 1fr; gap:20px;}
+  .topic-list{display:flex; flex-direction:column; gap:6px;}
+  .topic-list button{
+    text-align:left; background:transparent; border:1px solid transparent; border-radius:8px;
+    padding:9px 12px; color:var(--ink-soft); font-size:0.88rem;
+  }
+  .topic-list button:hover{background:var(--parchment-dark);}
+  .topic-list button.active{background:var(--purple); color:var(--parchment); font-weight:600;}
+  .doc-content h2{border-bottom:2px solid var(--gold); padding-bottom:8px; margin-bottom:14px;}
+  .doc-content p, .doc-content li{line-height:1.65; color:var(--ink); font-size:0.96rem;}
+  .doc-content ul{padding-left:22px;}
+  .archive-note{
+    margin-top:18px; background:var(--parchment-dark); border-left:4px solid var(--gold-dark);
+    padding:12px 16px; border-radius:6px; font-size:0.88rem; color:var(--ink-soft);
+  }
+  .archive-note b{color:var(--purple);}
+  .doc-nav{display:flex; justify-content:space-between; margin-top:22px; padding-top:16px; border-top:1px solid var(--parchment-dark);}
+
+  /* ---------- Practice / Exam shared ---------- */
+  .config-row{display:flex; gap:18px; flex-wrap:wrap; margin:16px 0;}
+  .config-field label{display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--purple); margin-bottom:5px;}
+  select{padding:8px 10px; border-radius:6px; border:1px solid var(--stone); background:#fff; font-size:0.9rem;}
+  .rules-list{list-style:none; padding:0; margin:16px 0;}
+  .rules-list li{padding:8px 0 8px 28px; position:relative; font-size:0.9rem; color:var(--ink-soft); border-bottom:1px dashed var(--parchment-dark);}
+  .rules-list li::before{content:"◆"; position:absolute; left:0; color:var(--gold-dark); font-size:0.8rem;}
+  .agree-row{display:flex; align-items:center; gap:8px; margin:18px 0; font-size:0.9rem;}
+
+  .question-progress{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:0.85rem; color:var(--ink-soft);}
+  .qbar{height:6px; background:var(--parchment-dark); border-radius:4px; overflow:hidden; margin-bottom:18px;}
+  .qbar-fill{height:100%; background:var(--gold); transition:width 0.2s;}
+  .question-text{font-size:1.08rem; font-weight:600; color:var(--purple-dark); margin-bottom:16px; line-height:1.5;}
+  .options{display:flex; flex-direction:column; gap:10px;}
+  .option-btn{
+    text-align:left; display:flex; align-items:center; gap:10px;
+    background:#fff; border:1px solid var(--stone); border-radius:8px; padding:11px 14px;
+    font-size:0.92rem; color:var(--ink);
+  }
+  .option-btn:hover{border-color:var(--purple-light); background:#faf6ec;}
+  .option-btn .letter{
+    width:24px; height:24px; border-radius:50%; border:1px solid var(--stone);
+    display:flex; align-items:center; justify-content:center; font-size:0.75rem; flex-shrink:0; color:var(--ink-soft);
+  }
+  .option-btn.selected{border-color:var(--purple); background:#efe6fb;}
+  .option-btn.selected .letter{background:var(--purple); border-color:var(--purple); color:#fff;}
+  .option-btn.correct{border-color:var(--success); background:var(--success-light);}
+  .option-btn.correct .letter{background:var(--success); border-color:var(--success); color:#fff;}
+  .option-btn.wrong{border-color:var(--danger); background:var(--danger-light);}
+  .option-btn.wrong .letter{background:var(--danger); border-color:var(--danger); color:#fff;}
+  .option-btn:disabled{cursor:default;}
+  .explain-box{margin-top:16px; padding:12px 16px; border-radius:8px; font-size:0.88rem; line-height:1.5;}
+  .explain-box.correct{background:var(--success-light); color:#204d2b; border-left:4px solid var(--success);}
+  .explain-box.wrong{background:var(--danger-light); color:#5c2317; border-left:4px solid var(--danger);}
+  .practice-actions{display:flex; justify-content:space-between; margin-top:22px;}
+  .score-tag{background:var(--purple); color:var(--parchment); padding:4px 12px; border-radius:20px; font-size:0.8rem; font-weight:600;}
+
+  .review-item{border:1px solid var(--parchment-dark); border-radius:8px; padding:14px; margin-bottom:12px;}
+  .review-item .qh{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px;}
+  .review-item .qh b{color:var(--purple-dark); font-size:0.92rem;}
+  .review-item .ans-line{font-size:0.85rem; margin:3px 0;}
+  .tag{font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px; flex-shrink:0;}
+  .tag.correct{background:var(--success-light); color:var(--success);}
+  .tag.wrong{background:var(--danger-light); color:var(--danger);}
+  .tag.skip{background:var(--warn-light); color:var(--warn);}
+
+  /* ---------- Exam intro ---------- */
+  .exam-summary-box{background:var(--parchment-dark); border-radius:8px; padding:14px 18px; margin-top:16px; font-size:0.88rem;}
+
+  /* ---------- Exam run (full immersive) ---------- */
+  #examChrome{position:relative; z-index:1; max-width:1180px; margin:16px auto 40px; padding:0 24px;}
+  .exam-topbar{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    background:var(--purple-dark); color:var(--parchment); border-radius:var(--radius) var(--radius) 0 0;
+    padding:14px 20px; border:1px solid var(--gold-dark); border-bottom:none;
+  }
+  .exam-topbar .title{font-family:"Palatino Linotype",serif; font-size:1.05rem; color:var(--gold-light);}
+  .timer{
+    font-variant-numeric:tabular-nums; font-size:1.3rem; font-weight:700; padding:5px 16px;
+    border-radius:8px; background:rgba(255,255,255,0.1); border:1px solid rgba(240,216,150,0.4); color:var(--gold-light);
+  }
+  .timer.low{background:var(--danger); color:#fff; animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+  .flag-indicator{font-size:0.78rem; color:var(--violet-accent); display:flex; align-items:center; gap:5px;}
+  .exam-body{
+    display:grid; grid-template-columns:1fr 250px; gap:0;
+    background:var(--parchment); border:1px solid var(--gold-dark); border-top:none;
+  }
+  .exam-question-area{padding:24px; border-right:1px solid var(--parchment-dark);}
+  .exam-side{padding:18px; background:var(--parchment-dark);}
+  .nav-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin-bottom:14px;}
+  .nav-grid button{
+    aspect-ratio:1; border-radius:6px; border:1px solid var(--stone); background:#fff; font-size:0.78rem; color:var(--ink-soft); position:relative;
+  }
+  .nav-grid button.current{outline:2px solid var(--purple); outline-offset:1px;}
+  .nav-grid button.answered{background:var(--success); color:#fff; border-color:var(--success);}
+  .nav-grid button.visited{background:var(--warn-light); border-color:var(--warn); color:var(--warn);}
+  .nav-grid button.marked::after{
+    content:""; position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%; background:var(--purple); border:1px solid #fff;
+  }
+  .legend{font-size:0.72rem; color:var(--ink-soft); display:flex; flex-direction:column; gap:5px;}
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .swatch{width:11px; height:11px; border-radius:3px; display:inline-block; border:1px solid var(--stone);}
+  .exam-toolbar{display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; padding:16px 24px; border-top:1px solid var(--parchment-dark); background:var(--parchment); border:1px solid var(--gold-dark); border-top:none; border-radius:0 0 var(--radius) var(--radius);}
+  .exam-toolbar .left-group, .exam-toolbar .right-group{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%);
+    background:var(--warn); color:#3a2b05; padding:10px 20px; border-radius:8px; font-size:0.88rem; font-weight:600;
+    box-shadow:var(--shadow); z-index:200; opacity:0; transition:opacity 0.3s; pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  .modal-overlay{position:fixed; inset:0; background:rgba(20,10,35,0.55); display:flex; align-items:center; justify-content:center; z-index:300;}
+  .modal{background:var(--parchment); border:1px solid var(--gold-dark); border-radius:var(--radius); padding:24px; max-width:420px; width:90%; box-shadow:var(--shadow);}
+  .modal h3{margin-bottom:12px;}
+  .modal .counts{display:flex; gap:16px; margin:14px 0;}
+  .modal .counts div{text-align:center; flex:1; background:var(--parchment-dark); border-radius:8px; padding:8px;}
+  .modal .counts b{display:block; font-size:1.2rem; color:var(--purple);}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
+
+  /* ---------- Result score ring ---------- */
+  .score-hero{display:flex; align-items:center; gap:28px; flex-wrap:wrap; justify-content:center; padding:10px 0 24px;}
+  .ring{width:150px; height:150px; border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0;}
+  .ring b{font-size:2rem; color:var(--purple-dark);}
+  .ring span{position:absolute; bottom:34px; font-size:0.72rem; color:var(--ink-soft); text-transform:uppercase;}
+  .badge-pass, .badge-fail{padding:6px 16px; border-radius:20px; font-weight:700; font-size:0.95rem; display:inline-block;}
+  .badge-pass{background:var(--success-light); color:var(--success);}
+  .badge-fail{background:var(--danger-light); color:var(--danger);}
+
+  .topic-bar-row{display:flex; align-items:center; gap:10px; margin:6px 0; font-size:0.85rem;}
+  .topic-bar-row .label{width:190px; flex-shrink:0; color:var(--ink-soft);}
+  .topic-bar-track{flex:1; height:8px; background:var(--parchment-dark); border-radius:4px; overflow:hidden;}
+  .topic-bar-fill{height:100%; background:var(--green);}
+  .topic-bar-row .pct{width:40px; text-align:right; color:var(--purple); font-weight:600;}
+
+  footer.small-note{max-width:1180px; margin:0 auto 30px; padding:0 24px; text-align:center; color:rgba(244,236,216,0.6); font-size:0.75rem;}
+  @media (max-width:720px){
+    .study-layout{grid-template-columns:1fr;}
+    .exam-body{grid-template-columns:1fr;}
+    .exam-question-area{border-right:none; border-bottom:1px solid var(--parchment-dark);}
+  }
+</style>
+</head>
+<body>
+
+<header id="skyline">
+  <div class="towers" id="towerRow"></div>
+  <div class="brand">
+    <div class="brand-title">
+      <h1>Geffen Academy</h1>
+      <p>Study Hall &amp; Examination Chamber</p>
+    </div>
+    <nav class="tabs" id="mainNav">
+      <button data-action="nav" data-view="home">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
+        Home
+      </button>
+      <button data-action="nav" data-view="study">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Study
+      </button>
+      <button data-action="nav" data-view="practice-setup">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Practice
+      </button>
+      <button data-action="nav" data-view="exam-intro">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>
+        Exam
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="app"></main>
+<div id="examChrome"></div>
+
+<footer class="small-note">Geffen Academy is a self-contained local study tool. All progress is stored only in this browser.</footer>
+
+<div id="toast" class="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= ICONS ================= */
+const ICONS = {
+  flag:'<svg class="icon" viewBox="0 0 24 24"><path d="M5 3v18"/><path d="M5 4h13l-3 4 3 4H5"/></svg>',
+  clock:'<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  eye:'<svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+};
+
+/* ================= CONTENT DATA ================= */
+const DOCS = {
+  genai: [
+    { id:'intro', title:'What Is Generative AI', html:`
+      <p>Generative AI refers to a class of artificial intelligence systems trained to <b>produce new content</b> — text, images, audio, code, or video — that resembles patterns found in the data they were trained on, rather than simply sorting, retrieving, or classifying existing information.</p>
+      <p>Where a traditional classifier might tell you "this email is spam," a generative model can write a brand-new email, summarize a report, or describe an image from scratch. The defining trait is <i>creation</i>, not just recognition.</p>
+      <ul>
+        <li>Learns statistical patterns from large datasets during training.</li>
+        <li>Samples from what it has learned to generate plausible new outputs.</li>
+        <li>Spans multiple modalities: text, images, audio, video, and code.</li>
+        <li>Powers tools like chatbots, image generators, and coding assistants.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> The term "generative" simply describes the model's job — generating output — not any particular architecture. Many different architectures (transformers, diffusion models, GANs) can all be "generative."</div>
+    `},
+    { id:'llm', title:'Large Language Models (LLMs)', html:`
+      <p>A Large Language Model (LLM) is a generative model specialized in text. It is trained on enormous amounts of written material to predict, one piece at a time, what text is likely to come next given some input.</p>
+      <p>Before an LLM can process text, the text is broken into <b>tokens</b> — words or word-fragments — which the model converts into numbers it can compute with. The amount of tokens a model can "see" at once is called its <b>context window</b>.</p>
+      <ul>
+        <li><b>Pre-training:</b> the model learns general language patterns from broad text data.</li>
+        <li><b>Fine-tuning:</b> further training on a narrower dataset to specialize behavior (e.g., following instructions).</li>
+        <li><b>Retrieval-Augmented Generation (RAG):</b> supplying external documents alongside a prompt so the model can reference information beyond its training data.</li>
+        <li><b>Hallucination:</b> when a model states something confidently that is not actually true, because it is generating plausible text rather than looking up verified facts.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> The Transformer architecture (2017) — with its "attention" mechanism that lets a model weigh the relevance of different words to each other — is the foundation nearly all modern LLMs are built on.</div>
+    `},
+    { id:'embeddings', title:'Embeddings & Semantic Search', html:`
+      <p>An <b>embedding</b> is a way of turning a piece of content — a word, sentence, image, or document — into a list of numbers (a vector) that captures its meaning. Content with similar meaning ends up with vectors that are close together in this numerical space, even if the exact wording is completely different.</p>
+      <p>This is the mechanism behind <b>semantic search</b>: instead of matching exact keywords, a system compares the meaning of a query to the meaning of stored content. It's also the foundation of Retrieval-Augmented Generation (RAG), where relevant documents are found by embedding similarity and then handed to an LLM as context.</p>
+      <ul>
+        <li>Embeddings are produced by a model trained specifically to map content into a meaningful vector space.</li>
+        <li>"Closeness" between vectors is typically measured with cosine similarity or a related distance metric.</li>
+        <li>A <b>vector database</b> stores embeddings and can quickly retrieve the closest matches to a query.</li>
+        <li>Semantic search can find relevant results even when no exact keywords overlap, unlike traditional keyword search.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> Two sentences with zero words in common — "a dog barking at the mail carrier" and "a canine reacting to the postal worker" — can still produce nearly identical embeddings, because embeddings capture meaning, not surface text.</div>
+    `},
+    { id:'prompt', title:'Prompt Engineering Basics', html:`
+      <p>Prompt engineering is the practice of crafting the input you give a generative model — instructions, context, and examples — to steer it toward the output you actually want.</p>
+      <p>Because these models respond to patterns in their input, small wording changes can noticeably change results. A few reliable techniques:</p>
+      <ul>
+        <li><b>Be specific:</b> state the format, tone, audience, and constraints explicitly rather than leaving them implied.</li>
+        <li><b>Few-shot examples:</b> show one or more examples of the input/output pattern you want before asking for the real task.</li>
+        <li><b>Chain-of-thought:</b> ask the model to reason step-by-step before giving a final answer, which often improves accuracy on complex tasks.</li>
+        <li><b>System prompt:</b> a persistent instruction set (persona, rules, tone) that applies across an entire conversation.</li>
+        <li><b>Temperature:</b> a setting that controls randomness — low values give more focused, deterministic output; high values give more varied, creative output.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> Prompt engineering is iterative. Treat your first prompt as a draft — refine it based on what the model actually produces, the same way you'd revise an essay outline.</div>
+    `},
+    { id:'diffusion', title:'Diffusion Models & Image Generation', html:`
+      <p>Most modern text-to-image tools (and increasingly, audio and video tools) are built on <b>diffusion models</b>. Instead of drawing a picture stroke by stroke, a diffusion model starts from a canvas of random noise and gradually <i>denoises</i> it over many steps until a coherent image emerges.</p>
+      <p>A text prompt (or other conditioning input) guides each denoising step so the final image matches the description. This is a fundamentally different process from a search engine returning an existing photo — the image is assembled fresh from learned visual patterns.</p>
+      <ul>
+        <li>Training teaches the model what "less noisy" versions of images look like at every stage.</li>
+        <li>Generation reverses that process, starting from pure noise.</li>
+        <li>Known weak spots include precise text rendering and exact object counts (e.g., number of fingers).</li>
+        <li>The same core idea — iterative refinement guided by a prompt — has been extended to audio and video generation.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> "Diffusion" borrows its name from the physics of particles spreading out (diffusing) into disorder — the model is trained to learn the reverse of that process.</div>
+    `},
+    { id:'agents', title:'AI Agents & Multimodal Models', html:`
+      <p>Beyond generating a single response, many modern systems combine a generative model with the ability to take actions — this is often called an <b>AI agent</b>. An agent can call external tools (search the web, run code, query a database), observe the result, and decide what to do next, sometimes across multiple steps, to accomplish a goal.</p>
+      <p>Separately, a <b>multimodal model</b> is one that can accept and/or generate more than one type of content in the same interaction — for example, taking an image and text question together as input, or generating both text and an image in a single response.</p>
+      <ul>
+        <li><b>Tool use / function calling:</b> the model decides when to invoke an external tool and how to use its output, rather than answering from its own knowledge alone.</li>
+        <li><b>Multi-step reasoning:</b> an agent may plan, act, observe results, and adjust its plan repeatedly before finishing.</li>
+        <li><b>Multimodal input/output:</b> combining text, images, audio, or video in a single model rather than needing separate specialized tools for each.</li>
+        <li>Agents raise new considerations around reliability, since a mistake in one step can affect later steps.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> "Agentic" workflows are often described as giving a model a goal rather than a single instruction — the model figures out the sequence of steps and tool calls needed along the way.</div>
+    `},
+    { id:'usage', title:'Getting the Most from GenAI Tools', html:`
+      <p>Knowing how generative AI works is only half the picture — using it well as a daily tool is its own skill. A few habits separate effective use from frustrating, low-quality results.</p>
+      <ul>
+        <li><b>Iterate, don't expect perfection on the first try.</b> Treat your first prompt as a draft; refine based on what comes back.</li>
+        <li><b>Give the model context it wouldn't otherwise have</b> — relevant background, constraints, examples, or the audience you're writing for.</li>
+        <li><b>Match the tool to the task.</b> A coding assistant, an image generator, and a general chat assistant are optimized differently; using the right one saves time.</li>
+        <li><b>Verify anything that matters.</b> Before using generated content for something consequential, check facts, citations, or code against a trusted source.</li>
+        <li><b>Break big tasks into smaller steps.</b> Asking for an entire project in one prompt tends to produce vaguer results than working through it piece by piece.</li>
+        <li><b>Keep a record of prompts that work well</b> for repeated tasks, so you're not reinventing your approach each time.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> Many experienced users treat a generative AI tool like a capable junior collaborator: fast and broadly knowledgeable, but still worth reviewing before its work goes out the door.</div>
+    `},
+    { id:'ethics', title:'Limitations, Risks & Responsible Use', html:`
+      <p>Generative AI is a powerful but imperfect tool. Understanding its failure modes is as important as understanding its capabilities.</p>
+      <ul>
+        <li><b>Hallucination:</b> confident-sounding but fabricated or false information.</li>
+        <li><b>Bias:</b> models can reflect and amplify biases present in their training data, producing skewed or unfair outputs.</li>
+        <li><b>Copyright & provenance:</b> open questions remain about training on existing copyrighted works and how generated outputs should be treated legally and ethically.</li>
+        <li><b>Over-reliance:</b> leaning on generated output without practicing or verifying skills yourself can erode learning and judgment over time.</li>
+      </ul>
+      <p>Responsible practices include verifying important claims against reliable sources, keeping a <b>human in the loop</b> for consequential decisions, and using generative tools as an aid to learning and drafting rather than a replacement for understanding.</p>
+      <div class="archive-note"><b>Archive Note:</b> A good habit: treat generative AI output the way you'd treat a knowledgeable but occasionally overconfident colleague — useful, fast, but worth double-checking before it goes into anything important.</div>
+    `},
+    { id:'privacy', title:'Privacy & Security When Using GenAI', html:`
+      <p>Because many generative AI tools are cloud-hosted services, what you type into them may be transmitted to, processed by, and in some cases retained by, a third-party provider. Treating that input thoughtfully is part of using these tools responsibly.</p>
+      <ul>
+        <li><b>Avoid pasting sensitive data</b> — passwords, private keys, personal identifying information, confidential business data — into a general-purpose tool unless you know exactly how that provider handles and retains input.</li>
+        <li><b>Check data retention and training policies.</b> Some providers may use submitted content to improve future models unless you opt out; enterprise or paid tiers often have different guarantees than free consumer tools.</li>
+        <li><b>Be cautious with generated code or configuration</b> that touches credentials, access control, or production systems — review it as carefully as you would review a colleague's pull request.</li>
+        <li><b>Understand who else can see a shared conversation</b> before sharing a chat link or transcript that might contain private details.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> A simple rule of thumb: don't paste anything into a generative AI tool that you wouldn't be comfortable sending in a plain, unencrypted email to a stranger.</div>
+    `},
+  ]
+};
+
+const QUESTIONS = {
+  genai: [
+    // ---- intro ----
+    { id:'i1', topic:'intro', text:'What best defines "generative AI"?', options:[
+      'AI that only classifies existing data into categories',
+      'AI models that create new content (text, images, audio, code) resembling patterns learned from training data',
+      'A rule-based expert system with no learning',
+      'A database query optimizer'
+    ], correct:1, explanation:'Generative AI refers to models trained to produce new, original outputs rather than merely labeling or retrieving existing data.'},
+    { id:'i2', topic:'intro', text:'Which of these is NOT typically considered a generative AI output?', options:[
+      'A paragraph of text',
+      'A synthesized image',
+      'A sorted list of numbers',
+      'A piece of generated music'
+    ], correct:2, explanation:'Sorting is a deterministic algorithmic operation, not content generated from learned patterns.'},
+    { id:'i3', topic:'intro', text:'Generative AI models are typically trained using what general approach?', options:[
+      'Manually programmed if-else rules',
+      'Learning statistical patterns from large datasets to predict/generate plausible outputs',
+      'Only human-curated lookup tables',
+      'Fixed templates filled in randomly'
+    ], correct:1, explanation:'These models learn distributions over data during training and sample from them to generate new content.'},
+    { id:'i4', topic:'intro', text:'Which underlying architecture popularized modern large-scale generative text models?', options:[
+      'Convolutional Neural Network (CNN) only',
+      'Transformer architecture',
+      'Decision tree ensembles',
+      'k-Nearest Neighbors'
+    ], correct:1, explanation:'The Transformer architecture, introduced in 2017, with its attention mechanism became the foundation for most modern large language models.'},
+    { id:'i5', topic:'intro', text:'What is "training data" in the context of generative AI?', options:[
+      'The output the model produces after deployment',
+      'The large collection of examples used to teach the model patterns before it is used',
+      'A single test question',
+      "The model's configuration file"
+    ], correct:1, explanation:'Training data is the corpus of examples the model learns from during the training process.'},
+    { id:'i6', topic:'intro', text:'Which of these is a common real-world application of generative AI?', options:[
+      'Drafting emails and summarizing documents',
+      'Physically manufacturing hardware',
+      'Directly repairing network cables',
+      'Enforcing firewall rules'
+    ], correct:0, explanation:'Text generation for drafting, summarizing, and answering questions is one of the most common generative AI applications today.'},
+    // ---- llm ----
+    { id:'l1', topic:'llm', text:'What does "LLM" stand for?', options:[
+      'Large Language Model', 'Linear Logic Machine', 'Layered Learning Module', 'Local Language Manager'
+    ], correct:0, explanation:'LLM stands for Large Language Model.'},
+    { id:'l2', topic:'llm', text:'What is "tokenization" in LLMs?', options:[
+      'Encrypting user data',
+      'Breaking text into smaller units (words/subwords) the model can process numerically',
+      "Assigning a login token to each user",
+      'Compressing an image'
+    ], correct:1, explanation:'Tokenization splits text into units the model converts into numbers for processing.'},
+    { id:'l3', topic:'llm', text:'What does a "context window" refer to?', options:[
+      'The physical screen size where output is displayed',
+      'The maximum amount of text (tokens) a model can consider at once when generating a response',
+      "The model's training duration",
+      'The number of GPUs used'
+    ], correct:1, explanation:'The context window is the limit on how much text the model can take into account at once.'},
+    { id:'l4', topic:'llm', text:'What is "fine-tuning"?', options:[
+      'Deleting a model entirely',
+      'Further training a pre-trained model on a smaller, specific dataset to specialize its behavior',
+      'Changing the screen resolution',
+      'Randomizing model weights'
+    ], correct:1, explanation:'Fine-tuning adapts a general pre-trained model to a narrower task or style using additional targeted training.'},
+    { id:'l5', topic:'llm', text:'Why might an LLM produce a factually incorrect but confident-sounding answer (a "hallucination")?', options:[
+      'Because it is deliberately programmed to lie',
+      'Because it generates plausible-sounding text based on patterns, without guaranteed grounding in verified facts',
+      'Because it copies answers verbatim from a fact database',
+      'Because the user typed too fast'
+    ], correct:1, explanation:'LLMs generate statistically plausible text, which can sound confident even when it is not factually grounded.'},
+    { id:'l6', topic:'llm', text:"What is one common technique to give an LLM up-to-date or private information it wasn't trained on?", options:[
+      'Retraining the entire model from scratch every query',
+      'Retrieval-Augmented Generation (RAG), which supplies relevant external documents in the prompt/context',
+      'Increasing screen brightness',
+      'Restarting the computer'
+    ], correct:1, explanation:'RAG retrieves relevant external documents and provides them as context so the model can reference information beyond its training data.'},
+    // ---- prompt ----
+    { id:'p1', topic:'prompt', text:'What is "prompt engineering"?', options:[
+      "Writing the model's source code",
+      'Crafting inputs (instructions/questions/examples) to guide a generative model toward a desired output',
+      'Installing hardware for AI servers',
+      'Debugging network protocols'
+    ], correct:1, explanation:'Prompt engineering is about designing effective inputs to steer model behavior.'},
+    { id:'p2', topic:'prompt', text:'What is a "few-shot prompt"?', options:[
+      'A prompt with no instructions at all',
+      'A prompt that includes a few examples of the desired input/output pattern before the actual task',
+      'A prompt limited to five words',
+      'A prompt sent to five different models'
+    ], correct:1, explanation:'Few-shot prompting provides example input/output pairs to demonstrate the desired pattern.'},
+    { id:'p3', topic:'prompt', text:'Which practice generally improves prompt clarity?', options:[
+      'Being vague so the model can "guess" what you want',
+      'Specifying the desired format, context, and constraints explicitly',
+      'Never giving any examples',
+      'Using only single-word prompts'
+    ], correct:1, explanation:'Explicit detail about format, context, and constraints generally produces more useful output.'},
+    { id:'p4', topic:'prompt', text:'What is a "system prompt" typically used for?', options:[
+      'Displaying error messages to the user',
+      'Setting persistent instructions/behavior/persona for the model across a conversation',
+      'Formatting the physical printer output',
+      'Logging server uptime'
+    ], correct:1, explanation:'A system prompt sets standing instructions or persona that apply throughout the conversation.'},
+    { id:'p5', topic:'prompt', text:'What does "temperature" control when generating text from an LLM?', options:[
+      'The physical CPU temperature',
+      'The randomness/creativity of the output — higher values produce more varied, less deterministic responses',
+      'The number of tokens allowed',
+      'The color theme of the UI'
+    ], correct:1, explanation:'Temperature adjusts how random or deterministic the generated output is.'},
+    { id:'p6', topic:'prompt', text:'What is "chain-of-thought" prompting?', options:[
+      'Asking the model to show step-by-step reasoning before giving a final answer',
+      'Linking multiple unrelated prompts together randomly',
+      'A way to encrypt prompts',
+      'A method to reduce token count to zero'
+    ], correct:0, explanation:'Chain-of-thought prompting asks the model to reason through steps, often improving accuracy on complex tasks.'},
+    // ---- diffusion ----
+    { id:'d1', topic:'diffusion', text:'At a high level, how do diffusion models generate images?', options:[
+      'By copying pixels directly from training images',
+      'By starting from random noise and iteratively denoising it, guided by learned patterns and a text prompt, into a coherent image',
+      'By running a simple color-fill algorithm',
+      'By searching a fixed image database'
+    ], correct:1, explanation:'Diffusion models iteratively remove noise from a random starting point, guided by conditioning such as a text prompt.'},
+    { id:'d2', topic:'diffusion', text:'What role does a text prompt typically play in text-to-image diffusion models?', options:[
+      'It has no effect on the output',
+      'It conditions/guides the denoising process so the final image aligns with the described content',
+      'It only sets the file name',
+      'It sets the screen resolution'
+    ], correct:1, explanation:'The prompt conditions each denoising step so the resulting image matches the described content.'},
+    { id:'d3', topic:'diffusion', text:'What is one known limitation of many image-generation models?', options:[
+      'They can struggle with precise text rendering or exact counts of objects (e.g., correct number of fingers)',
+      'They cannot produce any colors',
+      'They only work on black-and-white images',
+      'They require no training data at all'
+    ], correct:0, explanation:'Precise text and exact object/limb counts remain a known weak spot for many image-generation models.'},
+    { id:'d4', topic:'diffusion', text:'Which of these is also an application of generative models beyond images and text?', options:[
+      'Audio/music and speech synthesis',
+      'Only spreadsheet formulas',
+      'Only compiling source code into machine code',
+      'Only sorting algorithms'
+    ], correct:0, explanation:'Generative techniques are also applied to audio, music, and speech synthesis.'},
+    { id:'d5', topic:'diffusion', text:'What is one advantage of diffusion-based generation over simply retrieving an existing stored image?', options:[
+      'It can produce novel images that never existed before, matching a new, specific description',
+      'It guarantees zero computation is needed',
+      'It only works with black-and-white images',
+      'It requires no prompt at all'
+    ], correct:0, explanation:'Diffusion generates fresh images assembled from learned patterns, rather than retrieving something pre-existing.'},
+    { id:'d6', topic:'diffusion', text:'Which is a realistic expectation when generating an image from a very detailed, multi-part prompt?', options:[
+      'Every single detail will always be rendered with perfect accuracy',
+      'The model may capture the overall scene well while missing or blending some fine details',
+      'The output will always be identical regardless of the prompt',
+      'The model will refuse to generate anything'
+    ], correct:1, explanation:'Complex prompts with many details often result in the overall scene being captured while some finer details are approximated or blended.'},
+    // ---- embeddings ----
+    { id:'em1', topic:'embeddings', text:'What is an "embedding" in the context of generative AI?', options:[
+      'A numeric vector representation of content that captures its meaning',
+      'A password used to access a model',
+      'A type of image file format',
+      'A hardware chip used for training'
+    ], correct:0, explanation:'An embedding is a vector of numbers that represents the meaning of content such as text or images.'},
+    { id:'em2', topic:'embeddings', text:'What does "semantic search" rely on to find relevant results?', options:[
+      'Exact keyword matching only',
+      'Comparing the meaning (via embeddings) of a query to stored content, even without shared keywords',
+      'Random selection of documents',
+      'Alphabetical sorting of file names'
+    ], correct:1, explanation:'Semantic search compares embeddings to find content with similar meaning, regardless of exact wording overlap.'},
+    { id:'em3', topic:'embeddings', text:'What is a "vector database" used for?', options:[
+      'Storing and quickly retrieving embeddings based on similarity',
+      'Compiling source code',
+      'Managing user passwords',
+      'Rendering 3D graphics'
+    ], correct:0, explanation:'Vector databases are optimized to store embeddings and retrieve the closest matches to a query vector.'},
+    { id:'em4', topic:'embeddings', text:'In Retrieval-Augmented Generation (RAG), how are relevant documents typically found before being passed to the LLM?', options:[
+      'By manually copying and pasting them each time',
+      'By comparing the embedding of the query to embeddings of stored documents to find the closest matches',
+      'By picking the most recently created file',
+      'By choosing documents at random'
+    ], correct:1, explanation:'RAG systems typically use embedding similarity to retrieve the most relevant documents for a given query.'},
+    { id:'em5', topic:'embeddings', text:'Which measure is commonly used to compare how "close" two embeddings are?', options:[
+      'File size difference',
+      'Cosine similarity (or a related distance metric)',
+      'Alphabetical distance',
+      'Pixel color difference'
+    ], correct:1, explanation:'Cosine similarity and related distance metrics are standard ways to measure closeness between embedding vectors.'},
+    { id:'em6', topic:'embeddings', text:'Why might two sentences with completely different wording still have similar embeddings?', options:[
+      'Because embeddings are randomly generated',
+      'Because embeddings capture underlying meaning rather than exact surface text',
+      'Because all embeddings are identical',
+      'Because embeddings only look at sentence length'
+    ], correct:1, explanation:'Embeddings are designed to capture semantic meaning, so differently-worded content with similar meaning can still be close together.'},
+    // ---- agents ----
+    { id:'ag1', topic:'agents', text:'What best describes an "AI agent" in the context of generative AI systems?', options:[
+      'A model that can call external tools, observe results, and take further steps toward a goal',
+      'A model that only ever produces a single static response',
+      'A physical robot with no software component',
+      'A type of firewall rule'
+    ], correct:0, explanation:'An AI agent uses tools and takes multiple steps toward a goal, rather than just returning one response.'},
+    { id:'ag2', topic:'agents', text:'What is "tool use" or "function calling" by a generative model?', options:[
+      "The model formatting its own code comments",
+      'The model deciding to invoke an external tool or function and using its output to inform a response',
+      "The model changing its own screen resolution",
+      'The model deleting its training data'
+    ], correct:1, explanation:'Tool use / function calling lets a model invoke external functionality and incorporate the result into its response.'},
+    { id:'ag3', topic:'agents', text:'What defines a "multimodal" model?', options:[
+      'A model that can only process plain text',
+      'A model that can accept and/or generate more than one type of content, such as text and images together',
+      'A model that runs on multiple computers for speed only',
+      'A model with multiple unrelated names'
+    ], correct:1, explanation:'Multimodal models can handle more than one content type — such as text and images — in the same interaction.'},
+    { id:'ag4', topic:'agents', text:'Why might an agentic, multi-step workflow be riskier than a single generated response?', options:[
+      'It never produces any output at all',
+      'An error introduced at one step can carry forward and affect later steps and final actions',
+      'It always requires manual human typing for every step',
+      'It has no relation to reliability'
+    ], correct:1, explanation:'Because steps build on each other, an early mistake can propagate through the rest of an agentic workflow.'},
+    { id:'ag5', topic:'agents', text:'Which of these is an example of a multimodal use case?', options:[
+      'Sorting a list of numbers',
+      'Answering a question about the contents of an uploaded image',
+      'Alphabetizing file names',
+      "Formatting a spreadsheet's column widths"
+    ], correct:1, explanation:'Interpreting an image alongside a text question is a classic multimodal task.'},
+    { id:'ag6', topic:'agents', text:'What is one reason a developer might give a model access to a "tool" (like a calculator or search function)?', options:[
+      "To let the model perform actions or retrieve information it can't reliably do from memorized patterns alone",
+      'To make the model run slower on purpose',
+      'To prevent the model from ever answering questions',
+      'To permanently disable the model'
+    ], correct:0, explanation:'Tools let a model reliably perform actions (like precise math or live lookups) beyond what it can do from patterns learned during training.'},
+    // ---- usage ----
+    { id:'u1', topic:'usage', text:"What is a recommended approach when a first generated response isn't quite right?", options:[
+      'Give up on the tool entirely',
+      'Refine and re-prompt based on what the model actually produced, treating the first attempt as a draft',
+      'Assume the tool is broken and restart the computer',
+      'Publish the flawed output anyway'
+    ], correct:1, explanation:'Iterating on a prompt based on the actual output is a core part of using generative tools effectively.'},
+    { id:'u2', topic:'usage', text:'Why does giving a model relevant context and constraints usually improve results?', options:[
+      'It doesn’t — context has no effect',
+      "It narrows down what the model should focus on, producing output closer to what's actually needed",
+      'It slows the model down with no benefit',
+      'It is only useful for image generation'
+    ], correct:1, explanation:'Providing context and constraints helps the model target the specific output the user actually wants.'},
+    { id:'u3', topic:'usage', text:'Why does it help to "match the tool to the task" (e.g., using a coding assistant for code)?', options:[
+      'Because different tools are optimized for different types of content and tend to perform better within their specialty',
+      'Because all generative tools behave identically regardless of task',
+      'Because only one generative tool exists',
+      'Because task type has no bearing on tool choice'
+    ], correct:0, explanation:'Tools specialized for a given content type (code, images, text) tend to outperform general-purpose tools on that task.'},
+    { id:'u4', topic:'usage', text:'Why is breaking a large task into smaller prompted steps often more effective than one giant prompt?', options:[
+      'Smaller, focused steps are easier for the model to address precisely, often producing clearer, more usable results',
+      'It always takes more total time with no benefit',
+      'Large prompts are technically impossible to submit',
+      'It has no effect on output quality'
+    ], correct:0, explanation:'Focused, smaller steps tend to produce more precise and usable output than one very broad prompt.'},
+    { id:'u5', topic:'usage', text:'Before relying on generated content for something important (a report, code, a decision), what should a careful user do?', options:[
+      'Publish or ship it immediately without review',
+      'Verify facts, citations, or code correctness against a trusted source first',
+      'Avoid ever checking it, to save time',
+      'Ask a different unrelated question instead'
+    ], correct:1, explanation:'Verifying important generated content against trusted sources reduces the risk of acting on an error.'},
+    { id:'u6', topic:'usage', text:'What is one practical benefit of saving prompts that worked well for a recurring task?', options:[
+      'It has no benefit',
+      'It saves time and effort by reusing a proven approach instead of rebuilding it from scratch each time',
+      'It prevents the model from ever being used again',
+      "It automatically deletes the model's training data"
+    ], correct:1, explanation:'Reusing prompts that already work well saves time on recurring tasks.'},
+    // ---- ethics ----
+    { id:'e1', topic:'ethics', text:'What is a "hallucination" risk in generative AI outputs?', options:[
+      'The model refusing to answer',
+      'The model generating confident but false or fabricated information',
+      'The model crashing the browser',
+      'The model running too slowly'
+    ], correct:1, explanation:'Hallucination refers to confidently stated but false or fabricated information.'},
+    { id:'e2', topic:'ethics', text:'Why is bias in generative AI outputs a concern?', options:[
+      'It never happens in practice',
+      'Models can reflect and amplify biases present in their training data, leading to unfair or skewed outputs',
+      'It only affects image file size',
+      'It has no relation to training data'
+    ], correct:1, explanation:'Training data biases can be reflected and even amplified in model outputs.'},
+    { id:'e3', topic:'ethics', text:'What is a recommended responsible-use practice when using generative AI for important decisions?', options:[
+      'Blindly trust and publish the output without review',
+      'Verify important claims against reliable sources and apply human judgment before acting',
+      'Never use the tool at all',
+      'Only use it for anonymous unverified content'
+    ], correct:1, explanation:'Verifying claims and applying human judgment reduces the risk of acting on incorrect generated content.'},
+    { id:'e4', topic:'ethics', text:'What is a common concern regarding copyrighted material and generative AI training data?', options:[
+      'There is universal, settled agreement with no ongoing debate',
+      'Questions remain about how training on existing copyrighted works and generated outputs should be handled legally and ethically',
+      'Copyright law does not apply to any digital content',
+      'Only images can ever be copyrighted'
+    ], correct:1, explanation:'How copyright applies to training data and generated outputs remains an actively debated question.'},
+    { id:'e5', topic:'ethics', text:'What is one way to mitigate over-reliance on generative AI in a learning context?', options:[
+      'Using it exclusively without ever practicing skills independently',
+      "Using it as a study aid while still practicing and testing one's own understanding",
+      'Avoiding any form of self-assessment',
+      'Disabling all documentation'
+    ], correct:1, explanation:'Pairing generative AI with independent practice and self-testing helps preserve genuine understanding.'},
+    { id:'e6', topic:'ethics', text:'What does "human-in-the-loop" mean in AI workflows?', options:[
+      'Removing all human oversight entirely',
+      'Keeping a human reviewer involved to check, approve, or correct AI-generated outputs',
+      'A hardware component inside the GPU',
+      'A type of neural network layer'
+    ], correct:1, explanation:'Human-in-the-loop means a person remains involved to review or approve AI-generated outputs.'},
+    // ---- privacy ----
+    { id:'pv1', topic:'privacy', text:'Why should you be cautious about pasting sensitive data into a general-purpose generative AI tool?', options:[
+      'Sensitive input may be transmitted to and potentially retained by a third-party provider, depending on its policies',
+      'Generative AI tools never process any input at all',
+      'It has no bearing on data handling',
+      'All generative AI tools guarantee zero data retention by default'
+    ], correct:0, explanation:"Cloud-hosted generative AI tools may transmit and retain input according to the provider's own policies, so sensitive data warrants caution."},
+    { id:'pv2', topic:'privacy', text:"What should a user check regarding a generative AI provider's data practices?", options:[
+      'Nothing — data practices are irrelevant',
+      'Whether submitted content may be used for model training or retained, and whether opting out is possible',
+      "Only the tool's color scheme",
+      "The provider's stock price"
+    ], correct:1, explanation:"Understanding a provider's data retention and training policies (and any opt-out options) is a key part of using these tools responsibly."},
+    { id:'pv3', topic:'privacy', text:'How should generated code that touches credentials or production systems be treated?', options:[
+      'Deployed immediately without review',
+      "Reviewed carefully, similar to how you'd review a colleague's pull request, before trusting it in a sensitive context",
+      'Ignored entirely since AI-generated code is always correct',
+      'Automatically rejected regardless of content'
+    ], correct:1, explanation:'Sensitive generated code deserves the same careful review as code from a human collaborator.'},
+    { id:'pv4', topic:'privacy', text:'What is a reasonable rule of thumb for deciding what to paste into a generative AI tool?', options:[
+      'Paste anything, since nothing ever leaves your device',
+      "Avoid pasting anything you wouldn't be comfortable sending in a plain, unencrypted email to a stranger",
+      'Only paste content that is already public on the internet, and never worry about the rest',
+      'There is no reasonable guideline; use best guesses'
+    ], correct:1, explanation:'A useful heuristic is to treat input to a cloud AI tool with the same caution as an unencrypted email.'},
+    { id:'pv5', topic:'privacy', text:'Why might enterprise or paid tiers of a generative AI tool offer different data guarantees than free consumer versions?', options:[
+      'They are identical in every respect',
+      'Providers may offer stronger data handling, retention, or privacy guarantees as part of a paid or enterprise agreement',
+      'Paid tiers always store more data than free tiers',
+      'Pricing has no relationship to data policy'
+    ], correct:1, explanation:'Enterprise or paid agreements often include stronger contractual data handling and privacy guarantees than free tiers.'},
+    { id:'pv6', topic:'privacy', text:'Before sharing a conversation transcript or chat link from a generative AI tool, what should you consider?', options:[
+      'Nothing needs to be considered',
+      'Whether the shared content contains private or sensitive details and who will be able to view it',
+      'Only the length of the conversation',
+      'The font used in the chat interface'
+    ], correct:1, explanation:'Shared transcripts or links can expose private details to unintended viewers, so it is worth reviewing content and audience before sharing.'},
+  ]
+};
+
+const TOPIC_LABELS = {
+  intro:'Intro to Generative AI',
+  llm:'Large Language Models',
+  embeddings:'Embeddings & Semantic Search',
+  prompt:'Prompt Engineering',
+  diffusion:'Diffusion & Image Gen',
+  agents:'AI Agents & Multimodal Models',
+  usage:'Getting the Most from GenAI',
+  ethics:'Limitations & Ethics',
+  privacy:'Privacy & Security'
+};
+
+const SUBJECT_META = {
+  genai: { name:'Generative AI', tagline:'Foundations of modern AI-driven content creation — from LLMs to diffusion models.' }
+};
+
+const EXAM_DURATION_SEC = 45*60;
+const PASS_PCT = 60;
+const HISTORY_KEY = 'geffen_study_exam_history';
+
+/* ================= STATE ================= */
+let state = {
+  view:'home',
+  subject:'genai',
+  study:{ topic:'intro' },
+  practice:{ topic:'all', count:10, questions:[], index:0, answers:[], checked:false, score:0 },
+  exam:{ questions:[], index:0, answers:{}, marked:new Set(), visited:new Set(), timeLeft:EXAM_DURATION_SEC, timerId:null,
+         started:false, submitted:false, tabSwitches:0, startedAt:null, agreed:false, showModal:false, showReview:false }
+};
+
+/* ================= HELPERS ================= */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function prepareQuestions(bank, topicFilter, count){
+  let pool = bank.slice();
+  if(topicFilter && topicFilter!=='all') pool = pool.filter(q=>q.topic===topicFilter);
+  pool = shuffle(pool);
+  if(count && count < pool.length) pool = pool.slice(0, count);
+  return pool.map(q=>{
+    const optIndices = shuffle(q.options.map((_,i)=>i));
+    const options = optIndices.map(i=>q.options[i]);
+    const correct = optIndices.indexOf(q.correct);
+    return { id:q.id, topic:q.topic, text:q.text, options, correct, explanation:q.explanation };
+  });
+}
+function fmtTime(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function letterFor(i){ return String.fromCharCode(65+i); }
+function esc(str){
+  const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+}
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }catch(e){ return []; }
+}
+function saveHistory(list){ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+/* ================= RENDER: SHELL ================= */
+function renderTowers(){
+  const row = document.getElementById('towerRow');
+  const heights = [30,45,26,52,34,60,28,40];
+  row.innerHTML = heights.map(h=>`<div class="tower" style="height:${h}px"></div>`).join('');
+}
+function setActiveNav(){
+  const map = { home:'home', study:'study', 'practice-setup':'practice-setup','practice-run':'practice-setup','practice-summary':'practice-setup',
+                'exam-intro':'exam-intro','exam-run':'exam-intro','exam-summary':'exam-intro' };
+  const target = map[state.view] || 'home';
+  document.querySelectorAll('#mainNav button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view === target);
+  });
+}
+
+function render(){
+  setActiveNav();
+  const app = document.getElementById('app');
+  const chrome = document.getElementById('examChrome');
+  if(state.view === 'exam-run'){
+    app.style.display='none'; chrome.style.display='block';
+    chrome.innerHTML = renderExamRun();
+  } else {
+    chrome.style.display='none'; chrome.innerHTML='';
+    app.style.display='block';
+    switch(state.view){
+      case 'home': app.innerHTML = renderHome(); break;
+      case 'study': app.innerHTML = renderStudy(); break;
+      case 'practice-setup': app.innerHTML = renderPracticeSetup(); break;
+      case 'practice-run': app.innerHTML = renderPracticeRun(); break;
+      case 'practice-summary': app.innerHTML = renderPracticeSummary(); break;
+      case 'exam-intro': app.innerHTML = renderExamIntro(); break;
+      case 'exam-summary': app.innerHTML = renderExamSummary(); break;
+      default: app.innerHTML = renderHome();
+    }
+  }
+  window.scrollTo({top:0, behavior:'instant' in window ? 'instant' : 'auto'});
+}
+
+/* ================= RENDER: HOME ================= */
+function renderHome(){
+  const history = loadHistory();
+  const attempts = history.length;
+  const best = attempts ? Math.max(...history.map(h=>h.percent)) : null;
+  const last = attempts ? history[history.length-1] : null;
+  const rows = history.slice().reverse().slice(0,8).map(h=>`
+    <tr>
+      <td>${esc(h.date)}</td>
+      <td>${h.score}/${h.total}</td>
+      <td>${h.percent}%</td>
+      <td><span class="pill ${h.percent>=PASS_PCT?'pass':'fail'}">${h.percent>=PASS_PCT?'Pass':'Fail'}</span></td>
+      <td>${esc(h.duration)}</td>
+    </tr>`).join('');
+
+  return `
+    <div class="panel hero ornate">
+      <h2>Welcome to Geffen Academy</h2>
+      <p>A quiet study hall between the purple towers — read the archives, drill your recall with practice tests, then prove it in the examination chamber.</p>
+    </div>
+    <div class="panel ornate">
+      <h3>Subjects</h3>
+      <div class="cards">
+        <div class="subject-card clickable" data-action="nav" data-view="study" style="cursor:pointer;">
+          <h3>${esc(SUBJECT_META.genai.name)}</h3>
+          <p>${esc(SUBJECT_META.genai.tagline)}</p>
+          <div class="stats"><span>${DOCS.genai.length} topics</span><span>${QUESTIONS.genai.length} questions</span></div>
+        </div>
+        <div class="subject-card disabled">
+          <div class="ribbon">Soon</div>
+          <h3>Data Structures &amp; Algorithms</h3>
+          <p>Arrays, trees, graphs, and the classic interview staples.</p>
+        </div>
+        <div class="subject-card disabled">
+          <div class="ribbon">Soon</div>
+          <h3>Cloud Computing</h3>
+          <p>Core concepts across compute, storage, and networking.</p>
+        </div>
+        <div class="subject-card disabled">
+          <div class="ribbon">Soon</div>
+          <h3>Cybersecurity Fundamentals</h3>
+          <p>Threats, defenses, and the basics of keeping systems safe.</p>
+        </div>
+      </div>
+    </div>
+    <div class="panel ornate progress-section">
+      <h3>Your Progress</h3>
+      ${attempts ? `
+        <div class="stat-row">
+          <div class="stat-box"><b>${attempts}</b><span>Attempts</span></div>
+          <div class="stat-box"><b>${best}%</b><span>Best Score</span></div>
+          <div class="stat-box"><b>${last.percent}%</b><span>Last Score</span></div>
+        </div>
+        <table class="history">
+          <thead><tr><th>Date</th><th>Score</th><th>Percent</th><th>Result</th><th>Time Taken</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="margin-top:12px;"><button class="btn outline small" data-action="reset-history">Clear exam history</button></div>
+      ` : `<p style="color:var(--ink-soft);">No exam attempts yet — study up in the Archives, then take the certification exam!</p>`}
+    </div>
+  `;
+}
+
+/* ================= RENDER: STUDY ================= */
+function renderStudy(){
+  const docs = DOCS[state.subject];
+  const activeId = state.study.topic;
+  const doc = docs.find(d=>d.id===activeId) || docs[0];
+  const idx = docs.findIndex(d=>d.id===doc.id);
+  const prev = docs[idx-1], next = docs[idx+1];
+  return `
+    <div class="panel ornate">
+      <h3>${esc(SUBJECT_META[state.subject].name)} — Archives</h3>
+      <div class="study-layout">
+        <div class="topic-list">
+          ${docs.map(d=>`<button class="${d.id===doc.id?'active':''}" data-action="study-topic" data-topic="${d.id}">${esc(d.title)}</button>`).join('')}
+        </div>
+        <div class="doc-content">
+          <h2>${esc(doc.title)}</h2>
+          ${doc.html}
+          <div class="doc-nav">
+            <div>${prev ? `<button class="btn outline small" data-action="study-topic" data-topic="${prev.id}">&larr; ${esc(prev.title)}</button>` : ''}</div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn gold small" data-action="study-practice-jump" data-topic="${doc.id}">Practice this topic</button>
+              ${next ? `<button class="btn outline small" data-action="study-topic" data-topic="${next.id}">${esc(next.title)} &rarr;</button>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ================= RENDER: PRACTICE SETUP ================= */
+function renderPracticeSetup(){
+  const bank = QUESTIONS[state.subject];
+  const topic = state.practice.topic;
+  const available = (topic==='all') ? bank.length : bank.filter(q=>q.topic===topic).length;
+  const countOptions = [5,10,15,20].filter(n=>n<=available);
+  if(!countOptions.includes(available)) countOptions.push(available);
+  if(state.practice.count > available) state.practice.count = available;
+  return `
+    <div class="panel ornate">
+      <h3>Practice Test — ${esc(SUBJECT_META[state.subject].name)}</h3>
+      <p style="color:var(--ink-soft); font-size:0.9rem;">Low-stakes drilling with instant feedback and explanations after each question. Not recorded to your exam history.</p>
+      <div class="config-row">
+        <div class="config-field">
+          <label>Topic</label>
+          <select id="practiceTopicSelect">
+            <option value="all" ${topic==='all'?'selected':''}>All Topics (${bank.length})</option>
+            ${Object.keys(TOPIC_LABELS).map(t=>`<option value="${t}" ${topic===t?'selected':''}>${esc(TOPIC_LABELS[t])} (${bank.filter(q=>q.topic===t).length})</option>`).join('')}
+          </select>
+        </div>
+        <div class="config-field">
+          <label>Number of Questions</label>
+          <select id="practiceCountSelect">
+            ${countOptions.map(n=>`<option value="${n}" ${state.practice.count===n?'selected':''}>${n}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <button class="btn gold" data-action="practice-start">Start Practice</button>
+    </div>
+  `;
+}
+
+/* ================= RENDER: PRACTICE RUN ================= */
+function renderPracticeRun(){
+  const p = state.practice;
+  const q = p.questions[p.index];
+  const total = p.questions.length;
+  const selected = p.answers[p.index];
+  const checked = p.checked;
+  const pct = Math.round((p.index)/total*100);
+  const isLast = p.index === total-1;
+
+  const optionsHtml = q.options.map((opt,i)=>{
+    let cls = 'option-btn';
+    if(!checked && selected===i) cls += ' selected';
+    if(checked){
+      if(i===q.correct) cls += ' correct';
+      else if(i===selected) cls += ' wrong';
+    }
+    return `<button class="${cls}" ${checked?'disabled':''} data-action="practice-select" data-index="${i}">
+      <span class="letter">${letterFor(i)}</span><span>${esc(opt)}</span>
+    </button>`;
+  }).join('');
+
+  let explainHtml = '';
+  if(checked){
+    const wasCorrect = selected === q.correct;
+    explainHtml = `<div class="explain-box ${wasCorrect?'correct':'wrong'}">
+      <b>${wasCorrect ? 'Correct.' : 'Not quite.'}</b> ${esc(q.explanation)}
+    </div>`;
+  }
+
+  return `
+    <div class="panel ornate">
+      <div class="question-progress">
+        <span>Question ${p.index+1} of ${total} &middot; ${esc(TOPIC_LABELS[q.topic])}</span>
+        <span class="score-tag">Score: ${p.score}/${p.index + (checked?1:0)}</span>
+      </div>
+      <div class="qbar"><div class="qbar-fill" style="width:${pct}%"></div></div>
+      <div class="question-text">${esc(q.text)}</div>
+      <div class="options">${optionsHtml}</div>
+      ${explainHtml}
+      <div class="practice-actions">
+        <button class="btn outline" data-action="practice-quit">Quit to Setup</button>
+        ${!checked
+          ? `<button class="btn gold" data-action="practice-check" ${selected==null?'disabled':''}>Check Answer</button>`
+          : `<button class="btn gold" data-action="practice-next">${isLast?'Finish Practice':'Next Question'}</button>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+/* ================= RENDER: PRACTICE SUMMARY ================= */
+function renderPracticeSummary(){
+  const p = state.practice;
+  const total = p.questions.length;
+  const pct = Math.round(p.score/total*100);
+  const reviewHtml = p.questions.map((q,i)=>{
+    const ans = p.answers[i];
+    const correct = ans === q.correct;
+    const skipped = ans == null;
+    return `
+      <div class="review-item">
+        <div class="qh"><b>${i+1}. ${esc(q.text)}</b>
+          <span class="tag ${skipped?'skip':(correct?'correct':'wrong')}">${skipped?'Skipped':(correct?'Correct':'Incorrect')}</span>
+        </div>
+        <div class="ans-line">Your answer: <b>${ans!=null ? esc(q.options[ans]) : '—'}</b></div>
+        ${!correct ? `<div class="ans-line">Correct answer: <b>${esc(q.options[q.correct])}</b></div>` : ''}
+        <div class="ans-line" style="color:var(--ink-soft);">${esc(q.explanation)}</div>
+      </div>
+    `;
+  }).join('');
+  return `
+    <div class="panel ornate">
+      <h3>Practice Summary</h3>
+      <div class="score-hero">
+        <div class="ring" style="background:conic-gradient(var(--gold) ${pct}%, var(--parchment-dark) 0);">
+          <b>${pct}%</b><span>${p.score}/${total}</span>
+        </div>
+        <div>
+          <p style="color:var(--ink-soft); max-width:320px;">Nice drilling. Review the breakdown below, then retry for a fresh shuffle or head back to the archives.</p>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn gold" data-action="practice-retry">Retry Practice</button>
+            <button class="btn outline" data-action="nav" data-view="study">Back to Study</button>
+          </div>
+        </div>
+      </div>
+      <h3 style="margin-top:8px;">Review</h3>
+      ${reviewHtml}
+    </div>
+  `;
+}
+
+/* ================= RENDER: EXAM INTRO ================= */
+function renderExamIntro(){
+  const history = loadHistory();
+  const last = history.length ? history[history.length-1] : null;
+  const bank = QUESTIONS[state.subject];
+  return `
+    <div class="panel ornate">
+      <h3>${esc(SUBJECT_META[state.subject].name)} — Certification Exam</h3>
+      <p style="color:var(--ink-soft);">A timed, proctored-style assessment covering all topics in the archive. This mimics a real online assessment: a fixed timer, a question navigator, and a locked-in final submission.</p>
+      <ul class="rules-list">
+        <li>${bank.length} questions covering all topics</li>
+        <li>${Math.round(EXAM_DURATION_SEC/60)} minute time limit — the exam auto-submits when time expires</li>
+        <li>No negative marking: correct = +1, incorrect or unanswered = 0</li>
+        <li>Passing score: ${PASS_PCT}%</li>
+        <li>You may navigate freely and change answers until you submit</li>
+        <li>Switching tabs or minimizing the window will be flagged in an integrity log for this session</li>
+        <li>Once submitted, answers are final and correct answers/explanations are revealed</li>
+      </ul>
+      ${last ? `<div class="exam-summary-box">Last attempt: <b>${last.percent}%</b> (${last.score}/${last.total}) on ${esc(last.date)} &mdash; <span class="pill ${last.percent>=PASS_PCT?'pass':'fail'}">${last.percent>=PASS_PCT?'Pass':'Fail'}</span></div>` : ''}
+      <label class="agree-row">
+        <input type="checkbox" id="agreeBox" ${state.exam.agreed?'checked':''} data-action="exam-agree-toggle">
+        I have read and agree to the exam instructions above.
+      </label>
+      <button class="btn gold" data-action="exam-start" ${state.exam.agreed?'':'disabled'}>Start Exam</button>
+    </div>
+  `;
+}
+
+/* ================= RENDER: EXAM RUN ================= */
+function renderExamRun(){
+  const ex = state.exam;
+  const q = ex.questions[ex.index];
+  const total = ex.questions.length;
+  const answeredCount = Object.keys(ex.answers).length;
+  const notAnswered = total - answeredCount;
+  const markedCount = ex.marked.size;
+  const low = ex.timeLeft <= 120;
+
+  const navButtons = ex.questions.map((_,i)=>{
+    let cls = 'status-none';
+    if(i === ex.index) cls = 'current';
+    else if(ex.answers[i] !== undefined) cls = 'answered';
+    else if(ex.visited.has(i)) cls = 'visited';
+    if(ex.marked.has(i)) cls += ' marked';
+    if(i === ex.index) cls += ' current';
+    return `<button class="${cls}" data-action="exam-jump" data-index="${i}">${i+1}</button>`;
+  }).join('');
+
+  const optionsHtml = q.options.map((opt,i)=>{
+    const sel = ex.answers[ex.index] === i;
+    return `<button class="option-btn ${sel?'selected':''}" data-action="exam-select" data-index="${i}">
+      <span class="letter">${letterFor(i)}</span><span>${esc(opt)}</span>
+    </button>`;
+  }).join('');
+
+  let modalHtml = '';
+  if(ex.showModal){
+    modalHtml = `
+      <div class="modal-overlay">
+        <div class="modal">
+          <h3>Submit Exam?</h3>
+          <p style="font-size:0.88rem; color:var(--ink-soft);">Once submitted, you cannot return to change your answers.</p>
+          <div class="counts">
+            <div><b>${answeredCount}</b>Answered</div>
+            <div><b>${notAnswered}</b>Not Answered</div>
+            <div><b>${markedCount}</b>Marked</div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn outline" data-action="exam-submit-cancel">Cancel</button>
+            <button class="btn gold" data-action="exam-submit-confirm">Confirm Submit</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="exam-topbar">
+      <div class="title">${esc(SUBJECT_META[state.subject].name)} — Certification Exam</div>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="flag-indicator">${ICONS.eye} Integrity flags: ${ex.tabSwitches}</div>
+        <div class="timer ${low?'low':''}">${ICONS.clock} ${fmtTime(ex.timeLeft)}</div>
+      </div>
+    </div>
+    <div class="exam-body">
+      <div class="exam-question-area">
+        <div class="question-progress">
+          <span>Question ${ex.index+1} of ${total}</span>
+          <span>${esc(TOPIC_LABELS[q.topic])}</span>
+        </div>
+        <div class="question-text">${esc(q.text)}</div>
+        <div class="options">${optionsHtml}</div>
+      </div>
+      <div class="exam-side">
+        <h4 style="font-size:0.85rem; color:var(--purple); margin-bottom:10px;">Question Navigator</h4>
+        <div class="nav-grid">${navButtons}</div>
+        <div class="legend">
+          <span><span class="swatch" style="background:var(--success); border-color:var(--success);"></span>Answered</span>
+          <span><span class="swatch" style="background:var(--warn-light); border-color:var(--warn);"></span>Visited, not answered</span>
+          <span><span class="swatch" style="background:#fff;"></span>Not visited</span>
+          <span><span class="swatch" style="background:var(--purple); border-color:var(--purple);"></span>Marked for review</span>
+        </div>
+      </div>
+    </div>
+    <div class="exam-toolbar">
+      <div class="left-group">
+        <button class="btn outline small" data-action="exam-clear">Clear Response</button>
+        <button class="btn outline small" data-action="exam-mark-next">Mark for Review &amp; Next</button>
+      </div>
+      <div class="right-group">
+        <button class="btn gold small" data-action="exam-save-next">Save &amp; Next</button>
+        <button class="btn danger small" data-action="exam-submit-open">Submit Exam</button>
+      </div>
+    </div>
+    ${modalHtml}
+  `;
+}
+
+/* ================= RENDER: EXAM SUMMARY ================= */
+function renderExamSummary(){
+  const ex = state.exam;
+  const total = ex.questions.length;
+  let score = 0;
+  ex.questions.forEach((q,i)=>{ if(ex.answers[i] === q.correct) score++; });
+  const pct = Math.round(score/total*100);
+  const pass = pct >= PASS_PCT;
+
+  const topicStats = {};
+  ex.questions.forEach((q,i)=>{
+    if(!topicStats[q.topic]) topicStats[q.topic] = {correct:0,total:0};
+    topicStats[q.topic].total++;
+    if(ex.answers[i]===q.correct) topicStats[q.topic].correct++;
+  });
+
+  const topicBars = Object.keys(topicStats).map(t=>{
+    const s = topicStats[t];
+    const p = Math.round(s.correct/s.total*100);
+    return `<div class="topic-bar-row">
+      <div class="label">${esc(TOPIC_LABELS[t])}</div>
+      <div class="topic-bar-track"><div class="topic-bar-fill" style="width:${p}%"></div></div>
+      <div class="pct">${p}%</div>
+    </div>`;
+  }).join('');
+
+  const reviewHtml = ex.questions.map((q,i)=>{
+    const ans = ex.answers[i];
+    const correct = ans === q.correct;
+    const skipped = ans === undefined;
+    return `
+      <div class="review-item">
+        <div class="qh"><b>${i+1}. ${esc(q.text)}</b>
+          <span class="tag ${skipped?'skip':(correct?'correct':'wrong')}">${skipped?'Not Answered':(correct?'Correct':'Incorrect')}</span>
+        </div>
+        <div class="ans-line">Your answer: <b>${ans!=null ? esc(q.options[ans]) : '—'}</b></div>
+        ${!correct ? `<div class="ans-line">Correct answer: <b>${esc(q.options[q.correct])}</b></div>` : ''}
+        <div class="ans-line" style="color:var(--ink-soft);">${esc(q.explanation)}</div>
+      </div>
+    `;
+  }).join('');
+
+  const durationTaken = ex.finishedSeconds != null ? fmtTime(ex.finishedSeconds) : '—';
+
+  return `
+    <div class="panel ornate">
+      <h3>Exam Report</h3>
+      <div class="score-hero">
+        <div class="ring" style="background:conic-gradient(${pass?'var(--success)':'var(--danger)'} ${pct}%, var(--parchment-dark) 0);">
+          <b>${pct}%</b><span>${score}/${total}</span>
+        </div>
+        <div>
+          <span class="${pass?'badge-pass':'badge-fail'}">${pass?'PASS':'FAIL'}</span>
+          <p style="color:var(--ink-soft); margin-top:10px;">Time taken: ${durationTaken} &middot; Integrity flags: ${ex.tabSwitches}</p>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn gold" data-action="exam-retake">Retake Exam</button>
+            <button class="btn outline" data-action="nav" data-view="home">Back to Study Hall</button>
+          </div>
+        </div>
+      </div>
+      <h3>Performance by Topic</h3>
+      ${topicBars}
+      <div style="margin-top:16px;">
+        <button class="btn outline small" data-action="exam-toggle-review">${ex.showReview?'Hide':'Show'} Detailed Review</button>
+      </div>
+      ${ex.showReview ? `<div style="margin-top:14px;">${reviewHtml}</div>` : ''}
+    </div>
+  `;
+}
+
+/* ================= ACTIONS ================= */
+function stopExamTimer(){
+  if(state.exam.timerId){ clearInterval(state.exam.timerId); state.exam.timerId = null; }
+}
+function startExamTimer(){
+  stopExamTimer();
+  state.exam.timerId = setInterval(()=>{
+    state.exam.timeLeft--;
+    if(state.exam.timeLeft <= 0){
+      state.exam.timeLeft = 0;
+      submitExam(true);
+      return;
+    }
+    const timerEl = document.querySelector('.timer');
+    if(timerEl){
+      timerEl.innerHTML = ICONS.clock + ' ' + fmtTime(state.exam.timeLeft);
+      timerEl.classList.toggle('low', state.exam.timeLeft <= 120);
+    }
+  }, 1000);
+}
+
+function submitExam(auto){
+  stopExamTimer();
+  const ex = state.exam;
+  let score = 0;
+  ex.questions.forEach((q,i)=>{ if(ex.answers[i]===q.correct) score++; });
+  const total = ex.questions.length;
+  const percent = Math.round(score/total*100);
+  const elapsed = EXAM_DURATION_SEC - ex.timeLeft;
+  ex.finishedSeconds = elapsed;
+  ex.submitted = true;
+  ex.showModal = false;
+
+  const history = loadHistory();
+  history.push({
+    date: new Date().toLocaleString(),
+    score, total, percent,
+    duration: fmtTime(elapsed)
+  });
+  saveHistory(history);
+
+  state.view = 'exam-summary';
+  render();
+  if(auto) showToast('Time expired — exam auto-submitted.');
+}
+
+function handleAction(action, el){
+  switch(action){
+    case 'nav': {
+      if(state.view === 'exam-run' && !state.exam.submitted){
+        if(!confirm('Leave the exam now? Your progress will be lost and this will count as an incomplete attempt.')) return;
+        stopExamTimer();
+        resetExam();
+      }
+      state.view = el.dataset.view;
+      render();
+      break;
+    }
+    case 'reset-history': {
+      if(confirm('Clear all saved exam history from this browser?')){
+        localStorage.removeItem(HISTORY_KEY);
+        render();
+      }
+      break;
+    }
+    case 'study-topic': {
+      state.study.topic = el.dataset.topic;
+      render();
+      break;
+    }
+    case 'study-practice-jump': {
+      state.practice.topic = el.dataset.topic;
+      state.view = 'practice-setup';
+      render();
+      break;
+    }
+    case 'practice-start': {
+      const topicSel = document.getElementById('practiceTopicSelect');
+      const countSel = document.getElementById('practiceCountSelect');
+      state.practice.topic = topicSel.value;
+      state.practice.count = parseInt(countSel.value, 10);
+      state.practice.questions = prepareQuestions(QUESTIONS[state.subject], state.practice.topic, state.practice.count);
+      state.practice.index = 0;
+      state.practice.answers = [];
+      state.practice.checked = false;
+      state.practice.score = 0;
+      state.view = 'practice-run';
+      render();
+      break;
+    }
+    case 'practice-select': {
+      if(state.practice.checked) return;
+      state.practice.answers[state.practice.index] = parseInt(el.dataset.index, 10);
+      render();
+      break;
+    }
+    case 'practice-check': {
+      const p = state.practice;
+      if(p.answers[p.index] == null) return;
+      p.checked = true;
+      const q = p.questions[p.index];
+      if(p.answers[p.index] === q.correct) p.score++;
+      render();
+      break;
+    }
+    case 'practice-next': {
+      const p = state.practice;
+      if(p.index >= p.questions.length - 1){
+        state.view = 'practice-summary';
+      } else {
+        p.index++;
+        p.checked = false;
+      }
+      render();
+      break;
+    }
+    case 'practice-quit': {
+      state.view = 'practice-setup';
+      render();
+      break;
+    }
+    case 'practice-retry': {
+      state.practice.questions = prepareQuestions(QUESTIONS[state.subject], state.practice.topic, state.practice.count);
+      state.practice.index = 0;
+      state.practice.answers = [];
+      state.practice.checked = false;
+      state.practice.score = 0;
+      state.view = 'practice-run';
+      render();
+      break;
+    }
+    case 'exam-agree-toggle': {
+      state.exam.agreed = el.checked;
+      render();
+      break;
+    }
+    case 'exam-start': {
+      resetExam();
+      state.exam.agreed = true;
+      state.exam.questions = prepareQuestions(QUESTIONS[state.subject], 'all', QUESTIONS[state.subject].length);
+      state.exam.index = 0;
+      state.exam.timeLeft = EXAM_DURATION_SEC;
+      state.exam.visited.add(0);
+      state.view = 'exam-run';
+      render();
+      startExamTimer();
+      break;
+    }
+    case 'exam-select': {
+      state.exam.answers[state.exam.index] = parseInt(el.dataset.index, 10);
+      render();
+      break;
+    }
+    case 'exam-clear': {
+      delete state.exam.answers[state.exam.index];
+      render();
+      break;
+    }
+    case 'exam-save-next':
+    case 'exam-mark-next': {
+      if(action === 'exam-mark-next') state.exam.marked.add(state.exam.index);
+      if(state.exam.index < state.exam.questions.length - 1){
+        state.exam.index++;
+        state.exam.visited.add(state.exam.index);
+      }
+      render();
+      break;
+    }
+    case 'exam-jump': {
+      state.exam.index = parseInt(el.dataset.index, 10);
+      state.exam.visited.add(state.exam.index);
+      render();
+      break;
+    }
+    case 'exam-submit-open': {
+      state.exam.showModal = true;
+      render();
+      break;
+    }
+    case 'exam-submit-cancel': {
+      state.exam.showModal = false;
+      render();
+      break;
+    }
+    case 'exam-submit-confirm': {
+      submitExam(false);
+      break;
+    }
+    case 'exam-retake': {
+      resetExam();
+      state.view = 'exam-intro';
+      render();
+      break;
+    }
+    case 'exam-toggle-review': {
+      state.exam.showReview = !state.exam.showReview;
+      render();
+      break;
+    }
+  }
+}
+
+function resetExam(){
+  state.exam = { questions:[], index:0, answers:{}, marked:new Set(), visited:new Set(), timeLeft:EXAM_DURATION_SEC, timerId:null,
+    started:false, submitted:false, tabSwitches:0, startedAt:null, agreed:false, showModal:false, showReview:false };
+}
+
+/* ================= GLOBAL LISTENERS ================= */
+document.addEventListener('click', (e)=>{
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  handleAction(el.dataset.action, el);
+});
+document.addEventListener('change', (e)=>{
+  if(e.target.id === 'agreeBox'){
+    handleAction('exam-agree-toggle', e.target);
+  }
+});
+
+document.addEventListener('visibilitychange', ()=>{
+  if(state.view === 'exam-run' && document.hidden && !state.exam.submitted){
+    state.exam.tabSwitches++;
+    showToast('Tab switch detected (#' + state.exam.tabSwitches + '). This has been logged for exam integrity.');
+    const el = document.querySelector('.flag-indicator');
+    if(el) el.innerHTML = ICONS.eye + ' Integrity flags: ' + state.exam.tabSwitches;
+  }
+});
+window.addEventListener('beforeunload', (e)=>{
+  if(state.view === 'exam-run' && !state.exam.submitted){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+/* ================= INIT ================= */
+renderTowers();
+render();
+
+})();
+</script>
+</body>
+</html>
