@@ -506,6 +506,49 @@ const DOCS = {
       </ul>
       <div class="archive-note"><b>Archive Note:</b> The official source of truth is Anthropic's exam guide on the Partner Academy, plus the free Anthropic Academy courses (Building with the Claude API, Claude Platform 101, the two MCP courses, Claude Code 101 / in Action). This platform drills the concepts; pair it with hands-on API work.</div>
     `},
+    { id:'cc-plan', title:'4-Week Study Plan', html:`
+      <p>A realistic part-time plan (you're studying around a full-time job): about <b>1 hour on weekdays</b> and a <b>longer 2–3 hour block each weekend</b>. It front-loads the heavily-weighted domains and ends with full timed mocks. Each week follows the same loop: <b>read the doc → read the official docs → drill that topic in Practice → build a little</b>.</p>
+      <p style="color:var(--ink-soft); font-size:0.9rem;">Spend proportional to exam weight — don't over-invest in Claude Code (3%) or Eval (3%).</p>
+
+      <h3>Week 1 — Foundations + Applications & Integration (33%)</h3>
+      <ul>
+        <li><b>Read:</b> "Why This Certification", "The Exam & How to Study", then "Applications & Integration". Skim "Worked Examples" §1–3.</li>
+        <li><b>Official docs:</b> Streaming, Prompt Caching, Batch Processing, Files, Errors (from the Reading List).</li>
+        <li><b>Drill:</b> Practice → topic <i>Applications & Integration</i>, 15–20 questions, until you're at ~80%.</li>
+        <li><b>Build:</b> a tiny script that calls the Messages API, streams a response, and adds a cache breakpoint. Confirm <code>cache_read_input_tokens &gt; 0</code> on the second call.</li>
+        <li><b>Checkpoint (end of week):</b> short Practice over <i>all</i> topics; note weak spots.</li>
+      </ul>
+
+      <h3>Week 2 — Model Selection (17%) + Agents & Workflows (15%)</h3>
+      <ul>
+        <li><b>Read:</b> "Model Selection & Optimization" and "Agents & Workflows". Worked Examples §2 (tool loop), §6 (batch).</li>
+        <li><b>Official docs:</b> Models Overview, Pricing, Adaptive Thinking, Effort, Token Counting; Managed Agents Overview + Quickstart.</li>
+        <li><b>Drill:</b> Practice <i>Model Selection</i> then <i>Agents & Workflows</i>, 15 each.</li>
+        <li><b>Build:</b> extend last week's script into a small <i>agent loop</i> with one tool (e.g. a calculator or weather stub); loop until <code>end_turn</code>.</li>
+        <li><b>Checkpoint:</b> take your <b>first full timed exam</b> (53 Q / 120 min). Don't worry about the score — map the per-domain bars to find gaps.</li>
+      </ul>
+
+      <h3>Week 3 — Prompt & Context (11%) + Tools & MCP (11%) + Security (8%)</h3>
+      <ul>
+        <li><b>Read:</b> "Prompt & Context Engineering", "Tools & MCP", "Security & Safety". Worked Examples §4 (structured outputs).</li>
+        <li><b>Official docs:</b> Structured Outputs, Citations; Tool Use Overview, Code Execution, the MCP spec; Errors (retry rules).</li>
+        <li><b>Drill:</b> Practice each of the three topics, 12–15 each; re-drill any Week-1/2 topic still under 80%.</li>
+        <li><b>Build:</b> add structured outputs (<code>output_config.format</code>) to your tool's result, and consciously treat any external/tool text as untrusted data.</li>
+        <li><b>Checkpoint:</b> full timed exam again; compare domain bars to Week 2.</li>
+      </ul>
+
+      <h3>Week 4 — Claude Code + Eval, review, and mock exams</h3>
+      <ul>
+        <li><b>Read:</b> "Claude Code", "Eval, Testing & Debugging", and re-read your two weakest domain docs.</li>
+        <li><b>Official docs:</b> Claude Code overview; revisit any doc tied to questions you keep missing.</li>
+        <li><b>Drill:</b> Practice your weakest topics to ~85%; do a mixed all-topics set daily.</li>
+        <li><b>Mock exams:</b> take full timed exams until you score <b>≥80% twice in a row</b> (that's your buffer above the 70% pass line).</li>
+        <li><b>Readiness gate:</b> only book the Pearson VUE exam once you clear that bar <i>and</i> can explain <i>why</i> each answer is right, not just recognize it.</li>
+      </ul>
+
+      <div class="why-note"><b>If you only have 2 weeks:</b> compress — Week 1+2 together (foundations, apps, model, agents), then Week 3+4 together (everything else + mocks). Keep the "≥80% twice before booking" gate no matter the timeline.</div>
+      <div class="archive-note"><b>Archive Note:</b> The single highest-value activity is <i>building a small real thing</i> with the API — the exam rewards hands-on intuition that pure reading can't give. Treat the "Build" steps as non-optional. And re-confirm the exam blueprint/logistics on Anthropic's Partner Academy before booking.</div>
+    `},
     { id:'cc-apps', title:'Applications & Integration (33%)', html:`
       <p>This is the heaviest domain. It covers how the Claude API actually works and how you wire it into real software.</p>
       <p><b>One endpoint.</b> Everything goes through <b>POST /v1/messages</b>. Tool use, structured outputs, vision, and documents are all <i>features of this single endpoint</i> — not separate APIs. You send a <code>model</code>, <code>max_tokens</code>, an optional top-level <code>system</code> prompt, and a <code>messages</code> array of alternating <code>user</code>/<code>assistant</code> turns.</p>
