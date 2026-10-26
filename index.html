@@ -460,6 +460,152 @@ const DOCS = {
       </ul>
       <div class="archive-note"><b>Archive Note:</b> A simple rule of thumb: don't paste anything into a generative AI tool that you wouldn't be comfortable sending in a plain, unencrypted email to a stranger.</div>
     `},
+  ],
+  claudedev: [
+    { id:'cc-exam', title:'The Exam & How to Study', html:`
+      <p>The <b>Claude Certified Developer — Foundations (CCDV-F)</b> validates that you can design, build, and operate production applications on Claude. It is a knowledge exam, not a coding test — but it assumes you have actually built with the Claude API.</p>
+      <ul>
+        <li><b>53 questions</b>, multiple-choice and multiple-response. Each item tells you how many answers to select.</li>
+        <li><b>120 minutes</b>, delivered via Pearson VUE (online-proctored or test center).</li>
+        <li><b>Passing score: 720</b> on a 100–1000 scaled range (roughly 70%+). $125 per attempt.</li>
+        <li>Recommended background: 1–5 years engineering, 6+ months with Claude/LLMs, Python and/or TypeScript, comfort with REST APIs and CLIs.</li>
+      </ul>
+      <p><b>Domains and weight</b> — study in proportion to these. Applications & Integration alone is a third of the exam:</p>
+      <ul>
+        <li>Applications & Integration — <b>33%</b></li>
+        <li>Model Selection & Optimization — <b>17%</b></li>
+        <li>Agents & Workflows — <b>15%</b></li>
+        <li>Prompt & Context Engineering — <b>11%</b></li>
+        <li>Tools & MCP — <b>11%</b></li>
+        <li>Security & Safety — <b>8%</b></li>
+        <li>Claude Code — <b>3%</b></li>
+        <li>Eval, Testing & Debugging — <b>3%</b></li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> The official source of truth is Anthropic's exam guide on the Partner Academy, plus the free Anthropic Academy courses (Building with the Claude API, Claude Platform 101, the two MCP courses, Claude Code 101 / in Action). This platform drills the concepts; pair it with hands-on API work.</div>
+    `},
+    { id:'cc-apps', title:'Applications & Integration (33%)', html:`
+      <p>This is the heaviest domain. It covers how the Claude API actually works and how you wire it into real software.</p>
+      <p><b>One endpoint.</b> Everything goes through <b>POST /v1/messages</b>. Tool use, structured outputs, vision, and documents are all <i>features of this single endpoint</i> — not separate APIs. You send a <code>model</code>, <code>max_tokens</code>, an optional top-level <code>system</code> prompt, and a <code>messages</code> array of alternating <code>user</code>/<code>assistant</code> turns.</p>
+      <ul>
+        <li><b>Roles:</b> the <code>system</code> prompt sets persistent instructions/persona and is a separate top-level field, not a message. <code>messages</code> carries the conversation; you resend the full history each turn (the API is stateless).</li>
+        <li><b>max_tokens</b> is a hard cap on the response. Hitting it truncates output mid-thought (<code>stop_reason: "max_tokens"</code>) and forces a retry — size it to the task.</li>
+        <li><b>stop_reason</b> tells you why generation ended: <code>end_turn</code>, <code>max_tokens</code>, <code>tool_use</code>, <code>pause_turn</code>, or <code>refusal</code>. Always check it before reading content.</li>
+        <li><b>Streaming (SSE):</b> use it for long inputs/outputs or high <code>max_tokens</code> to avoid HTTP timeouts, and to show tokens as they arrive. SDK helpers like <code>.get_final_message()</code> assemble the full response.</li>
+      </ul>
+      <p><b>Supporting endpoints</b> feed into Messages: <b>Batches</b> (async, ~50% cost, results arrive in any order — key by <code>custom_id</code>), <b>Files</b> (upload once, reference by <code>file_id</code>), <b>Token Counting</b> (<code>/v1/messages/count_tokens</code>), and <b>Models</b> (<code>GET /v1/models</code> for live capability/context-window discovery).</p>
+      <p><b>Integration practices.</b> Use the <b>official SDK</b> for your language rather than hand-rolling HTTP. Configure <b>timeouts</b> and <b>retries</b> (SDKs retry 408/409/429/5xx + connection errors by default). Keep API calls <b>server-side</b>. Use <b>configuration management</b> — environment variables, not hard-coded keys or models — so you can swap models and settings without code changes.</p>
+      <div class="archive-note"><b>Archive Note:</b> Document input: a PDF goes in a <code>document</code> content block (base64 or Files API <code>file_id</code>), placed before the text block. Images go in <code>image</code> blocks. The content-block type must match the file's MIME type.</div>
+    `},
+    { id:'cc-model', title:'Model Selection & Optimization (17%)', html:`
+      <p>Choosing the right model and controlling token spend is a core developer skill.</p>
+      <p><b>The three families</b> trade capability against speed and cost:</p>
+      <ul>
+        <li><b>Opus</b> — most capable reasoning; the default for hard, high-value, or long-horizon agentic work.</li>
+        <li><b>Sonnet</b> — balanced speed and capability; the everyday workhorse for coding, agents, and enterprise workloads.</li>
+        <li><b>Haiku</b> — fastest and cheapest; great for high-volume, latency-sensitive, or simple tasks, and as a cheap worker/sub-agent model.</li>
+      </ul>
+      <p>Use exact model ID strings (e.g. <code>claude-opus-5-5</code>, <code>claude-sonnet-5-5</code>, <code>claude-haiku-5-5</code>) — never append date suffixes. Query the <b>Models API</b> for live context window and capabilities rather than hard-coding them.</p>
+      <p><b>Tokens and cost.</b> Text is split into <b>tokens</b>; the <b>context window</b> is how many tokens the model can consider at once. You pay per input and per output token, and <b>output tokens cost several times more than input tokens</b>. Count tokens with the <code>count_tokens</code> endpoint — never with third-party tokenizers like tiktoken.</p>
+      <ul>
+        <li><b>Effort</b> (<code>output_config.effort</code>: low→max) is the first quality-vs-cost lever within a model: higher effort = deeper reasoning and more tokens. Measure before raising a default; coding/agentic work repays high effort, chat/classification often don't.</li>
+        <li><b>Adaptive thinking</b> (<code>thinking: {type: "adaptive"}</code>) lets the model decide when and how much to reason. The old fixed <code>budget_tokens</code> concept is deprecated on current models.</li>
+        <li><b>Free wins first:</b> prompt caching, trimming input, tightening output, and batching reduce cost without touching quality — reach for effort/model trade-offs after.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> Judge cost <i>per completed task</i>, not per request. A cheaper model that needs more turns or retries to finish the job is not actually cheaper. Measure on real traffic before cascading across multiple models.</div>
+    `},
+    { id:'cc-agents', title:'Agents & Workflows (15%)', html:`
+      <p>Know the difference between a workflow and an agent, and when each is appropriate.</p>
+      <ul>
+        <li><b>Workflow</b> — <i>you</i> orchestrate the control flow in code. The path is predetermined: prompt chaining, routing, parallelization. Predictable, testable, cheaper.</li>
+        <li><b>Agent</b> — the <i>model</i> drives the loop, deciding which tools to call and when, over multiple steps, until it reaches a goal. Flexible but less predictable and more expensive.</li>
+      </ul>
+      <p><b>Start simple.</b> Use the least complex tier that solves the problem: a single call, then a workflow, and only reach for an agent when the task is genuinely open-ended. Before building an agent, check: is it <b>complex</b> (hard to fully specify)? Does the <b>value</b> justify the cost/latency? Is Claude <b>viable</b> at it? Can you recover from <b>errors</b> (tests, review, rollback)? A "no" means stay simpler.</p>
+      <p><b>Common patterns:</b></p>
+      <ul>
+        <li><b>Prompt chaining</b> — break a task into sequential steps, each feeding the next.</li>
+        <li><b>Routing</b> — classify the input, then send it to a specialized prompt/model.</li>
+        <li><b>Parallelization</b> — run independent subtasks concurrently and aggregate.</li>
+        <li><b>Orchestrator–workers</b> — a lead model decomposes work and delegates to workers.</li>
+        <li><b>Evaluator–optimizer</b> — one model generates, another critiques and iterates.</li>
+      </ul>
+      <p>The <b>agent loop</b> is: call the API → if <code>stop_reason</code> is <code>tool_use</code>, execute the tool(s) and append <code>tool_result</code>(s) → call again → repeat until <code>end_turn</code>. SDK <b>tool runners</b> automate this loop for tools you define; you can also write the loop by hand for full control.</p>
+      <div class="archive-note"><b>Archive Note:</b> "Managed Agents" is a separate hosted surface where Anthropic runs the loop and hosts a per-session sandbox. The Claude Agent SDK is Claude Code packaged as a library. Both differ from the plain API tool-use loop — don't conflate them.</div>
+    `},
+    { id:'cc-prompt', title:'Prompt & Context Engineering (11%)', html:`
+      <p>Prompt engineering shapes a single request; context engineering manages what the model sees across a long interaction.</p>
+      <p><b>Prompt techniques:</b></p>
+      <ul>
+        <li><b>Be explicit</b> about format, tone, audience, and constraints — don't leave them implied.</li>
+        <li><b>Use the system prompt</b> for role, rules, and persistent behavior; put the task in the user turn.</li>
+        <li><b>Few-shot examples</b> show the input→output pattern you want before the real task.</li>
+        <li><b>Structure with XML tags or headings</b> to separate instructions, context, and data — Claude follows clearly delimited structure well.</li>
+        <li><b>Let the model reason</b> (adaptive thinking / "think step by step") on complex tasks before the final answer.</li>
+      </ul>
+      <p><b>Context engineering</b> is deciding what to include, in what order, and what to drop as a conversation grows:</p>
+      <ul>
+        <li><b>Prompt caching</b> rewards putting stable content (system prompt, tool list, reference docs) <i>first</i> and volatile content last.</li>
+        <li><b>Retrieval (RAG)</b> injects only the relevant documents instead of stuffing everything into context.</li>
+        <li><b>Context editing</b> clears old tool results/thinking; <b>compaction</b> summarizes earlier turns when nearing the window limit.</li>
+      </ul>
+      <p><b>Output handling:</b> for reliable machine-readable output use <b>structured outputs</b> (<code>output_config.format</code> with a JSON schema) or <code>strict: true</code> on a tool — far more reliable than asking for JSON in prose and parsing by hand. Note: assistant-message <b>prefill is removed on current models</b>; use structured outputs or system instructions to control format instead.</p>
+      <div class="archive-note"><b>Archive Note:</b> To reduce <b>hallucination</b>: ground the model with retrieved documents and citations, give it tools to look things up, and explicitly permit "I don't know" rather than forcing an answer.</div>
+    `},
+    { id:'cc-tools', title:'Tools & MCP (11%)', html:`
+      <p><b>Tool use (function calling)</b> lets Claude call functions you define.</p>
+      <ul>
+        <li>You declare each tool with a <code>name</code>, <code>description</code>, and an <code>input_schema</code> (JSON Schema). A clear description is what makes Claude use the tool correctly.</li>
+        <li>Claude returns a <code>tool_use</code> block (with <code>stop_reason: "tool_use"</code>). <i>You</i> execute the function and return the result as a <code>tool_result</code> block in a <b>user</b> message.</li>
+        <li><b>Parallel tool use</b> is on by default: one assistant message may contain several <code>tool_use</code> blocks. Return <b>all</b> <code>tool_result</code> blocks in a <b>single</b> user message — splitting them trains Claude to stop calling in parallel.</li>
+        <li>For a failed call, return a <code>tool_result</code> with <code>is_error: true</code> — don't drop it.</li>
+        <li><b>strict: true</b> on a tool guarantees the <code>input</code> validates exactly against the schema (needs <code>additionalProperties: false</code> + <code>required</code>). Always parse tool input with a real JSON parser, never string matching.</li>
+      </ul>
+      <p><b>Server-side tools</b> run on Anthropic's infrastructure (web search, web fetch, code execution) — you declare them and results come back in the same response, no client loop.</p>
+      <p><b>Model Context Protocol (MCP)</b> is an open standard for connecting LLMs to external tools and data through <b>MCP servers</b>. It decouples integrations: build a server once, and any MCP-aware client (Claude Code, the API's MCP connector, desktop apps) can use it.</p>
+      <ul>
+        <li>MCP primitives: <b>tools</b> (actions the model can invoke), <b>resources</b> (data/content the model can read), and <b>prompts</b> (reusable templates).</li>
+        <li>Via the API's MCP connector you must supply <i>both</i> halves: the <code>mcp_servers</code> list <i>and</i> an <code>mcp_toolset</code> tool entry referencing the same server name.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> The bash and text-editor tools are Anthropic-defined and schema-less — you declare them by <code>type</code> with no <code>input_schema</code>. A custom tool you name "bash" with your own schema is a different tool.</div>
+    `},
+    { id:'cc-security', title:'Security & Safety (8%)', html:`
+      <p>Treat an LLM application like any other system that handles untrusted input and secrets.</p>
+      <p><b>Keys & secrets:</b></p>
+      <ul>
+        <li><b>Never put your API key in client-side code</b> (browser, mobile app). Calls go through a server/proxy you control; the key lives in a secret store or environment variable, never in source or version control.</li>
+        <li>Rotate keys, scope them narrowly, and use separate keys per environment.</li>
+      </ul>
+      <p><b>Prompt injection</b> is the signature LLM threat: malicious instructions hidden in user input, retrieved documents, tool output, or web pages try to override your system prompt. Defenses:</p>
+      <ul>
+        <li>Keep trusted instructions in the <b>system</b> prompt; treat all external/retrieved content as <b>data, not instructions</b>.</li>
+        <li><b>Gate high-impact tool calls</b> behind validation, allow-lists, and human approval — especially anything that sends data out, spends money, or deletes.</li>
+        <li>Apply <b>least privilege</b> to tools and MCP servers.</li>
+      </ul>
+      <p><b>Guardrails & safe deployment:</b> validate and sanitize inputs and outputs, filter or classify unsafe content, keep a <b>human in the loop</b> for consequential actions, and log/monitor for abuse. Check <code>stop_reason: "refusal"</code> and handle it gracefully.</p>
+      <p><b>Claude hooks</b> (in Claude Code) run your own commands on events such as before/after a tool call — useful for enforcing policy, blocking dangerous actions, or logging.</p>
+      <div class="archive-note"><b>Archive Note:</b> Don't send data to an external service without authorization — once sent it may be cached or indexed even if later deleted. For deletes/overwrites and outward-facing actions, confirm first unless explicitly and durably authorized.</div>
+    `},
+    { id:'cc-code', title:'Claude Code (3%)', html:`
+      <p><b>Claude Code</b> is Anthropic's agentic coding tool that runs in the terminal (and IDEs), reading and editing files, running commands, and using tools to complete development tasks.</p>
+      <ul>
+        <li><b>CLAUDE.md</b> is project memory: conventions, commands, and context Claude loads automatically each session.</li>
+        <li><b>Slash commands</b> (e.g. <code>/init</code>, <code>/review</code>) and user-defined commands trigger repeatable workflows.</li>
+        <li><b>MCP servers</b> extend Claude Code with external tools and data sources.</li>
+        <li><b>Hooks</b> run commands on lifecycle events (e.g. before a tool call, on stop) to enforce rules or automate steps.</li>
+        <li><b>Permissions</b> control which actions run automatically vs. need approval — the safety boundary for an agent editing your code.</li>
+        <li><b>Subagents</b> delegate focused subtasks; <b>skills</b> package reusable instructions.</li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> Claude Code is built on the same tool-use loop you learn in the Agents domain — it's a concrete example of an agent with built-in file, shell, and search tools running on your own machine.</div>
+    `},
+    { id:'cc-eval', title:'Eval, Testing & Debugging (3%)', html:`
+      <p>You can't improve what you don't measure, and LLM outputs are non-deterministic — so testing looks different from ordinary unit tests.</p>
+      <ul>
+        <li><b>Build an eval set:</b> representative inputs with a grading method (exact match, rubric, or an LLM-as-judge). Run it before and after a change to know whether you actually improved — don't trust "vibes."</li>
+        <li><b>Iterate against the eval</b> ("hill-climbing"): change one thing, re-run, keep or revert based on the score. Use a held-out test split so you don't overfit.</li>
+        <li><b>Debug by reading <code>stop_reason</code> and <code>usage</code>:</b> truncation (<code>max_tokens</code>), refusals, and low cache hits (<code>cache_read_input_tokens</code> stuck at zero) each point to different fixes.</li>
+      </ul>
+      <p><b>Error handling:</b> catch <b>specific</b> SDK exception types, not one broad class. Retry transient failures — <b>429 (rate limit)</b> and <b>5xx</b> — with backoff; do <b>not</b> retry <b>4xx</b> like 400/404 (they won't succeed on retry). Return tool failures as <code>tool_result</code> with <code>is_error: true</code> so the model can recover.</p>
+      <div class="archive-note"><b>Archive Note:</b> Observability (e.g. OpenTelemetry tracing, logging <code>response.usage</code>) turns production behavior into data you can debug and cost-optimize against — but it needs a backend you run, so add it once you have real traffic.</div>
+    `},
   ]
 };
 
@@ -795,28 +941,400 @@ const QUESTIONS = {
       'Only the length of the conversation',
       'The font used in the chat interface'
     ], correct:1, explanation:'Shared transcripts or links can expose private details to unintended viewers, so it is worth reviewing content and audience before sharing.'},
+  ],
+  claudedev: [
+    // ===== Applications & Integration (33%) =====
+    { id:'a1', topic:'apps', text:'Which endpoint do Claude API features like tool use, structured outputs, and vision all go through?', options:[
+      'A separate /v1/tools endpoint for each feature',
+      'POST /v1/messages — they are all features of this single endpoint',
+      'GET /v1/completions',
+      'A different microservice per feature'
+    ], correct:1, explanation:'Everything runs through POST /v1/messages. Tools, structured outputs, and document/image input are configuration on that one endpoint, not separate APIs.'},
+    { id:'a2', topic:'apps', text:'The Claude Messages API is stateless. What does this mean for a multi-turn conversation?', options:[
+      'The server remembers prior turns automatically',
+      'You must resend the full relevant message history on each request',
+      'You can only ever send one message',
+      'State is stored in a cookie'
+    ], correct:1, explanation:'Because the API does not persist conversation state, your client sends the accumulated messages array each turn.'},
+    { id:'a3', topic:'apps', text:'Where does a persistent instruction or persona belong in a request?', options:[
+      'In the top-level system field',
+      'As the first user message',
+      'In max_tokens',
+      'In the model ID string'
+    ], correct:0, explanation:'The system prompt is a separate top-level field for persistent instructions/persona; messages carry the conversation turns.'},
+    { id:'a4', topic:'apps', text:'What is max_tokens?', options:[
+      'The size of the context window',
+      'A hard cap on the length of the generated response',
+      'The number of tokens in your prompt',
+      'A pricing tier'
+    ], correct:1, explanation:'max_tokens limits the output. If generation hits it, the response is truncated with stop_reason "max_tokens".'},
+    { id:'a5', topic:'apps', text:'A response comes back with stop_reason "max_tokens". What happened?', options:[
+      'The model refused the request',
+      'The output was cut off because it reached the max_tokens limit',
+      'The input was too long',
+      'The API key expired'
+    ], correct:1, explanation:'stop_reason "max_tokens" means the response was truncated at the cap — raise max_tokens or shorten the task.'},
+    { id:'a6', topic:'apps', text:'Why should you stream responses for long outputs or high max_tokens?', options:[
+      'Streaming is cheaper per token',
+      'To avoid HTTP request timeouts and to display output as it is generated',
+      'It increases the context window',
+      'Non-streaming requests are not allowed'
+    ], correct:1, explanation:'Long generations can exceed HTTP timeouts; streaming (SSE) delivers tokens incrementally, avoiding timeouts and improving UX.'},
+    { id:'a7', topic:'apps', text:'What is the main advantage of the Message Batches API?', options:[
+      'Real-time responses',
+      'Asynchronous processing at roughly 50% of the cost for non-latency-sensitive work',
+      'Larger context windows',
+      'It removes rate limits entirely'
+    ], correct:1, explanation:'Batches process asynchronously at about half the cost — ideal when you do not need an immediate response.'},
+    { id:'a8', topic:'apps', text:'Batch results come back in an unpredictable order. How should you match them to requests?', options:[
+      'By their position in the results list',
+      'By the custom_id you assigned to each request',
+      'By timestamp',
+      'Order is always guaranteed'
+    ], correct:1, explanation:'Results can arrive in any order, so key them by the custom_id you set on each request — never by index.'},
+    { id:'a9', topic:'apps', text:'You need to reference the same large PDF across many requests without re-uploading it. What do you use?', options:[
+      'Paste the text into every system prompt',
+      'The Files API — upload once, then reference it by file_id',
+      'Base64-encode it in each request',
+      'The Batches API'
+    ], correct:1, explanation:'The Files API lets you upload a file once and reference it by file_id in document/image blocks across requests.'},
+    { id:'a10', topic:'apps', text:'How should you discover a model’s current context window and capabilities at runtime?', options:[
+      'Hard-code them from documentation',
+      'Query the Models API (GET /v1/models)',
+      'Guess based on the model name',
+      'Call count_tokens'
+    ], correct:1, explanation:'The Models API returns live capability and context-window data, so you need not hard-code values that may change.'},
+    { id:'a11', topic:'apps', text:'What is the recommended way to call Claude from a Python or TypeScript project?', options:[
+      'Hand-rolled raw HTTP with requests/fetch',
+      'The official Anthropic SDK for that language',
+      'An OpenAI-compatible shim',
+      'Only cURL'
+    ], correct:1, explanation:'Use the official SDK — it handles retries, timeouts, typed errors, streaming helpers, and types for you.'},
+    { id:'a12', topic:'apps', text:'Where should the model ID, API key, and tuning parameters live for a production app?', options:[
+      'Hard-coded in source files',
+      'In configuration/environment variables so they can change without code edits',
+      'In the client-side bundle',
+      'In the Git commit message'
+    ], correct:1, explanation:'Good configuration management keeps keys and model choices in environment/config so you can swap them without redeploying code logic.'},
+    { id:'a13', topic:'apps', text:'A PDF document block in a user message should be placed where relative to the text?', options:[
+      'After the text block',
+      'Before the text block',
+      'In the system prompt',
+      'Order does not matter at all'
+    ], correct:1, explanation:'Place the document (and image) blocks before the text/question block so the model reads the content before the instruction.'},
+    { id:'a14', topic:'apps', text:'By default, the official SDKs automatically retry which kinds of failures?', options:[
+      'All errors including 400 and 404',
+      'Transient failures: 408, 409, 429, 5xx, and connection errors',
+      'No errors are retried',
+      'Only 404s'
+    ], correct:1, explanation:'SDKs retry transient/retryable errors with backoff by default; deterministic 4xx like 400/404 are not retried.'},
+    { id:'a15', topic:'apps', text:'What is the correct first step when deciding how to build a Claude feature?', options:[
+      'Always build a multi-agent system',
+      'Start with the simplest tier (a single call) and add complexity only if needed',
+      'Fine-tune a custom model',
+      'Build a workflow before trying a single call'
+    ], correct:1, explanation:'Start simple: single call → workflow → agent. Only escalate when the task genuinely requires it.'},
+    { id:'a16', topic:'apps', text:'Which content-block type must match the uploaded file’s MIME type when referencing a file?', options:[
+      'All files use the image block',
+      'A PDF/text file uses a document block; an image uses an image block',
+      'All files use a document block',
+      'The block type is irrelevant'
+    ], correct:1, explanation:'The content-block type must match the file: document blocks for PDF/text, image blocks for images.'},
+    // ===== Model Selection & Optimization (17%) =====
+    { id:'m1', topic:'model', text:'For a high-volume, latency-sensitive classification task where cost matters most, which model family fits best?', options:[
+      'Opus', 'Haiku', 'The largest model available', 'It does not matter'
+    ], correct:1, explanation:'Haiku is the fastest and cheapest family — ideal for high-volume, simple, latency-sensitive work.'},
+    { id:'m2', topic:'model', text:'Which model family is the default choice for the hardest reasoning and long-horizon agentic tasks?', options:[
+      'Haiku', 'Sonnet', 'Opus', 'Whichever is cheapest'
+    ], correct:2, explanation:'Opus is the most capable family, used for demanding reasoning and long-horizon agentic work.'},
+    { id:'m3', topic:'model', text:'Which statement about token pricing is correct?', options:[
+      'Input and output tokens cost the same',
+      'Output tokens typically cost several times more than input tokens',
+      'Only input tokens are billed',
+      'Caching makes input tokens more expensive'
+    ], correct:1, explanation:'Output tokens are substantially more expensive than input tokens, so trimming output length is a real cost lever.'},
+    { id:'m4', topic:'model', text:'What is a context window?', options:[
+      'The UI panel where output appears',
+      'The maximum number of tokens the model can consider at once',
+      'The model’s training cutoff date',
+      'The number of requests per minute allowed'
+    ], correct:1, explanation:'The context window is the token limit on everything the model can attend to in a single request.'},
+    { id:'m5', topic:'model', text:'How should you count tokens for a prompt or file?', options:[
+      'Use the count_tokens endpoint',
+      'Use tiktoken or another third-party tokenizer',
+      'Divide character count by 4',
+      'Guess from word count'
+    ], correct:0, explanation:'Use the official count_tokens endpoint — third-party tokenizers do not match Claude’s tokenizer.'},
+    { id:'m6', topic:'model', text:'Within a single model, what is the first lever to trade quality against cost?', options:[
+      'Switching to a different provider',
+      'The effort setting (output_config.effort)',
+      'Lowering max_tokens to 1',
+      'Disabling the context window'
+    ], correct:1, explanation:'Effort (low→max) controls reasoning depth and token spend within one model; it is the primary quality/cost dial.'},
+    { id:'m7', topic:'model', text:'Which workloads generally repay a higher effort setting?', options:[
+      'Simple classification and short chat',
+      'Complex coding and long-horizon agentic tasks',
+      'All workloads equally',
+      'Only streaming requests'
+    ], correct:1, explanation:'Coding and agentic work benefit most from higher effort; chat/classification often do fine at low effort.'},
+    { id:'m8', topic:'model', text:'On current models, how do you let the model decide how much to reason?', options:[
+      'Set a fixed budget_tokens value',
+      'Use adaptive thinking (thinking: {type: "adaptive"})',
+      'Disable thinking entirely',
+      'Set temperature to 1'
+    ], correct:1, explanation:'Adaptive thinking lets the model allocate reasoning dynamically; the old fixed budget_tokens is deprecated on current models.'},
+    { id:'m9', topic:'model', text:'Which optimization should you try BEFORE trading away quality (e.g., downgrading the model)?', options:[
+      'Prompt caching and trimming input/output — the "free wins"',
+      'Immediately switch to the smallest model',
+      'Remove all system prompts',
+      'Disable retries'
+    ], correct:0, explanation:'Free wins (caching, input/output hygiene, batching) cut cost without sacrificing quality; do them before quality trade-offs.'},
+    { id:'m10', topic:'model', text:'What is the right unit for comparing cost between two approaches?', options:[
+      'Cost per request',
+      'Cost per completed task (accounting for retries and extra turns)',
+      'Number of tokens in the system prompt',
+      'Lines of code'
+    ], correct:1, explanation:'A cheaper request that needs more turns/retries is not cheaper overall — measure cost per completed task.'},
+    // ===== Agents & Workflows (15%) =====
+    { id:'g1', topic:'agents', text:'What distinguishes an agent from a workflow?', options:[
+      'An agent is always cheaper',
+      'In a workflow you control the path in code; in an agent the model drives the loop and chooses tools dynamically',
+      'Workflows cannot use tools',
+      'Agents cannot call the API'
+    ], correct:1, explanation:'Workflows have code-controlled, predetermined paths; agents let the model decide steps and tool calls toward a goal.'},
+    { id:'g2', topic:'agents', text:'Which is NOT one of the checks before deciding to build an agent?', options:[
+      'Complexity of the task',
+      'Value justifying the cost/latency',
+      'The color scheme of the UI',
+      'Cost of error and ability to recover'
+    ], correct:2, explanation:'The criteria are complexity, value, viability, and cost of error — UI aesthetics are irrelevant to that decision.'},
+    { id:'g3', topic:'agents', text:'Classifying an input and routing it to a specialized prompt or model is which pattern?', options:[
+      'Routing', 'Prompt chaining', 'Evaluator-optimizer', 'Parallelization'
+    ], correct:0, explanation:'Routing classifies input then directs it to the handler best suited for that category.'},
+    { id:'g4', topic:'agents', text:'Breaking a task into sequential steps where each output feeds the next is called:', options:[
+      'Parallelization', 'Prompt chaining', 'Routing', 'Orchestration'
+    ], correct:1, explanation:'Prompt chaining decomposes a task into ordered steps, passing each result to the next.'},
+    { id:'g5', topic:'agents', text:'One model generates a draft and a second model critiques and iterates on it. This is:', options:[
+      'Routing', 'The evaluator-optimizer pattern', 'Batching', 'Caching'
+    ], correct:1, explanation:'Evaluator-optimizer pairs a generator with a critic that drives iterative improvement.'},
+    { id:'g6', topic:'agents', text:'In the tool-use agent loop, what signals that you must execute a tool and continue?', options:[
+      'stop_reason "end_turn"', 'stop_reason "tool_use"', 'stop_reason "max_tokens"', 'An HTTP 429'
+    ], correct:1, explanation:'stop_reason "tool_use" means Claude requested a tool; you execute it, append tool_result, and call again.'},
+    { id:'g7', topic:'agents', text:'What does an SDK "tool runner" do?', options:[
+      'Hosts your tools on Anthropic servers',
+      'Automates the request → execute tool → loop cycle for tools you define',
+      'Replaces the need for the Messages API',
+      'Fine-tunes the model'
+    ], correct:1, explanation:'A tool runner drives the agentic loop over your defined tools so you do not hand-write the while-loop (you still host the tools).'},
+    { id:'g8', topic:'agents', text:'Which should you reach for LAST, only when the task is genuinely open-ended?', options:[
+      'A single API call', 'A workflow', 'An agent', 'A classification prompt'
+    ], correct:2, explanation:'Start simple; a model-driven agent is the most complex/costly tier and should be used only when truly needed.'},
+    // ===== Prompt & Context Engineering (11%) =====
+    { id:'p1', topic:'prompt', text:'What generally improves prompt reliability the most?', options:[
+      'Being explicit about format, constraints, and audience',
+      'Keeping the prompt as vague as possible',
+      'Using the highest temperature',
+      'Avoiding the system prompt'
+    ], correct:0, explanation:'Specific instructions about format, tone, audience, and constraints steer the model far better than vague prompts.'},
+    { id:'p2', topic:'prompt', text:'Why structure a prompt with XML tags or clear headings?', options:[
+      'It is required by the API',
+      'It cleanly separates instructions, context, and data so Claude follows the structure',
+      'It reduces token cost to zero',
+      'It disables thinking'
+    ], correct:1, explanation:'Delimiting sections with tags/headings helps the model distinguish instructions from data and improves adherence.'},
+    { id:'p3', topic:'prompt', text:'What is few-shot prompting?', options:[
+      'Sending very short prompts',
+      'Providing example input/output pairs before the real task',
+      'Limiting the model to a few tokens',
+      'Running the prompt a few times'
+    ], correct:1, explanation:'Few-shot prompting shows examples of the desired pattern so the model generalizes to the real input.'},
+    { id:'p4', topic:'prompt', text:'For prompt caching to work well, where should stable content (system prompt, tool list) go?', options:[
+      'At the very end of the request',
+      'First — before volatile, per-request content',
+      'It does not matter',
+      'In the user message only'
+    ], correct:1, explanation:'Caching matches a stable prefix, so put unchanging content first and volatile content last.'},
+    { id:'p5', topic:'prompt', text:'What is the most reliable way to get machine-readable JSON output?', options:[
+      'Ask for JSON in prose and parse with regex',
+      'Use structured outputs (output_config.format) or strict tool schemas',
+      'Lower max_tokens',
+      'Use assistant prefill (removed on current models)'
+    ], correct:1, explanation:'Structured outputs / strict schemas constrain the response to valid JSON far more reliably than parsing free text.'},
+    { id:'p6', topic:'prompt', text:'Which technique most directly reduces hallucination?', options:[
+      'Increasing max_tokens',
+      'Grounding the model with retrieved documents/citations and allowing "I don’t know"',
+      'Raising effort to max only',
+      'Removing the system prompt'
+    ], correct:1, explanation:'Grounding in real sources (RAG, tools, citations) and permitting uncertainty reduce fabricated answers.'},
+    { id:'p7', topic:'prompt', text:'As a conversation grows near the context limit, what does compaction do?', options:[
+      'Deletes the whole history',
+      'Summarizes earlier context so the conversation can continue',
+      'Increases the context window',
+      'Caches the prompt'
+    ], correct:1, explanation:'Compaction summarizes earlier turns to fit the window; context editing instead clears old tool results/thinking.'},
+    // ===== Tools & MCP (11%) =====
+    { id:'t1', topic:'tools', text:'What must every custom tool definition include?', options:[
+      'A name, description, and input_schema (JSON Schema)',
+      'Only a name',
+      'A trained model',
+      'A server URL'
+    ], correct:0, explanation:'Tools are declared with a name, a clear description, and an input_schema describing their parameters.'},
+    { id:'t2', topic:'tools', text:'After Claude returns a tool_use block, who executes the tool?', options:[
+      'Anthropic runs it automatically',
+      'Your application executes it and returns a tool_result',
+      'The model runs it internally',
+      'It is never executed'
+    ], correct:1, explanation:'For client-defined tools, you execute the function and pass back a tool_result block in a user message.'},
+    { id:'t3', topic:'tools', text:'When Claude makes several parallel tool calls, how do you return the results?', options:[
+      'One tool_result per message, across several messages',
+      'All tool_result blocks in a single user message',
+      'Only the first result',
+      'In the system prompt'
+    ], correct:1, explanation:'Return all tool_result blocks in one user message; splitting them trains Claude to stop calling tools in parallel.'},
+    { id:'t4', topic:'tools', text:'A tool call fails. What do you send back?', options:[
+      'Nothing — drop the result',
+      'A tool_result with is_error: true',
+      'A 500 HTTP status',
+      'A new system prompt'
+    ], correct:1, explanation:'Return the failed call as a tool_result with is_error: true so the model can see and recover from the failure.'},
+    { id:'t5', topic:'tools', text:'What is the Model Context Protocol (MCP)?', options:[
+      'A proprietary Anthropic-only API',
+      'An open standard for connecting LLMs to external tools and data via MCP servers',
+      'A prompt-formatting language',
+      'A fine-tuning technique'
+    ], correct:1, explanation:'MCP is an open standard; build an MCP server once and any MCP-aware client can use its tools, resources, and prompts.'},
+    { id:'t6', topic:'tools', text:'What are the three core MCP primitives?', options:[
+      'Tools, resources, and prompts',
+      'Models, tokens, and weights',
+      'Input, output, and errors',
+      'GET, POST, and DELETE'
+    ], correct:0, explanation:'MCP exposes tools (actions), resources (readable data/content), and prompts (reusable templates).'},
+    { id:'t7', topic:'tools', text:'What distinguishes a server-side tool (like web search) from a custom tool?', options:[
+      'Server-side tools run on Anthropic’s infrastructure with no client execution loop',
+      'Server-side tools need no description',
+      'Custom tools cannot have schemas',
+      'There is no difference'
+    ], correct:0, explanation:'Server-side tools execute on Anthropic’s infrastructure and return results in the same response; custom tools run in your code.'},
+    // ===== Security & Safety (8%) =====
+    { id:'s1', topic:'security', text:'Where should your Claude API key live?', options:[
+      'In the browser/mobile client so calls are faster',
+      'Server-side only, in a secret store or environment variable — never in client code or version control',
+      'In a public config file',
+      'Hard-coded in the frontend bundle'
+    ], correct:1, explanation:'API keys must stay server-side in a secret store; exposing them in client code or source leaks credentials.'},
+    { id:'s2', topic:'security', text:'What is prompt injection?', options:[
+      'A faster way to send prompts',
+      'Malicious instructions hidden in user input, documents, or tool output that try to override your system prompt',
+      'Injecting code into the model weights',
+      'A caching technique'
+    ], correct:1, explanation:'Prompt injection smuggles adversarial instructions through untrusted content to hijack the model’s behavior.'},
+    { id:'s3', topic:'security', text:'A core defense against prompt injection is to:', options:[
+      'Treat retrieved/external content as data, not instructions, and gate high-impact tool calls',
+      'Put user input directly in the system prompt',
+      'Disable the system prompt',
+      'Give every tool maximum privileges'
+    ], correct:0, explanation:'Keep trusted instructions in the system prompt, treat external content as untrusted data, and require approval for risky actions.'},
+    { id:'s4', topic:'security', text:'Which action most warrants a human-in-the-loop approval gate?', options:[
+      'A read-only summarization call',
+      'A tool that sends money, deletes data, or emails externally',
+      'Counting tokens',
+      'Fetching the model list'
+    ], correct:1, explanation:'High-impact, hard-to-reverse, or outward-facing actions should require human approval and validation.'},
+    { id:'s5', topic:'security', text:'Your request returns stop_reason "refusal". The right response is to:', options:[
+      'Ignore it and read the content anyway',
+      'Handle it gracefully — check stop_reason before using content, and optionally fall back',
+      'Retry the identical request forever',
+      'Delete the API key'
+    ], correct:1, explanation:'Always check stop_reason; on a refusal, handle it (e.g., fallback) rather than treating it as a normal completion.'},
+    { id:'s6', topic:'security', text:'What do Claude Code hooks let you do?', options:[
+      'Fine-tune the model',
+      'Run your own commands on lifecycle events (e.g., before/after a tool call) to enforce policy or log',
+      'Increase the context window',
+      'Bypass permissions'
+    ], correct:1, explanation:'Hooks execute custom commands on events, letting you enforce rules, block dangerous actions, or log activity.'},
+    // ===== Claude Code (3%) =====
+    { id:'c1', topic:'code', text:'What is the purpose of a CLAUDE.md file?', options:[
+      'It stores your API key',
+      'It is project memory — conventions, commands, and context Claude Code loads each session',
+      'It is a required build file',
+      'It configures billing'
+    ], correct:1, explanation:'CLAUDE.md gives Claude Code persistent project context (conventions, commands, architecture) automatically each session.'},
+    { id:'c2', topic:'code', text:'In Claude Code, what controls whether an action runs automatically or needs approval?', options:[
+      'The model ID', 'Permissions', 'max_tokens', 'The context window'
+    ], correct:1, explanation:'Permissions are the safety boundary deciding which tool/command actions run automatically vs. require user approval.'},
+    { id:'c3', topic:'code', text:'What is Claude Code fundamentally?', options:[
+      'A static linter',
+      'An agentic coding tool that reads/edits files and runs commands via the tool-use loop',
+      'A cloud database',
+      'A prompt library'
+    ], correct:1, explanation:'Claude Code is an agent with built-in file, shell, and search tools — a concrete application of the tool-use loop.'},
+    // ===== Eval, Testing & Debugging (3%) =====
+    { id:'e1', topic:'eval', text:'Why do you need an eval set rather than judging LLM output by "vibes"?', options:[
+      'Evals are required by the API',
+      'Output is non-deterministic; an eval set with a grading method lets you measure whether a change actually helped',
+      'Evals make the model deterministic',
+      'They replace all testing'
+    ], correct:1, explanation:'An eval set of representative inputs plus a grading method turns subjective impressions into a measurable score.'},
+    { id:'e2', topic:'eval', text:'Which errors should you retry with backoff, and which should you not?', options:[
+      'Retry 429 and 5xx; do not retry 400/404',
+      'Retry everything including 400',
+      'Never retry anything',
+      'Retry only 404s'
+    ], correct:0, explanation:'429 (rate limit) and 5xx are transient and worth retrying; deterministic 4xx like 400/404 will not succeed on retry.'},
+    { id:'e3', topic:'eval', text:'Repeated requests show cache_read_input_tokens stuck at zero. What does this indicate?', options:[
+      'Caching is working perfectly',
+      'A silent cache invalidator (e.g., a timestamp or varying content in the cached prefix) is breaking the cache',
+      'The model is refusing',
+      'max_tokens is too low'
+    ], correct:1, explanation:'Zero cache reads across repeats means the prefix is changing each request — a classic silent invalidator like a timestamp or unsorted JSON.'},
   ]
 };
 
 const TOPIC_LABELS = {
-  intro:'Intro to Generative AI',
-  llm:'Large Language Models',
-  embeddings:'Embeddings & Semantic Search',
-  prompt:'Prompt Engineering',
-  diffusion:'Diffusion & Image Gen',
-  agents:'AI Agents & Multimodal Models',
-  usage:'Getting the Most from GenAI',
-  ethics:'Limitations & Ethics',
-  privacy:'Privacy & Security'
+  genai: {
+    intro:'Intro to Generative AI',
+    llm:'Large Language Models',
+    embeddings:'Embeddings & Semantic Search',
+    prompt:'Prompt Engineering',
+    diffusion:'Diffusion & Image Gen',
+    agents:'AI Agents & Multimodal Models',
+    usage:'Getting the Most from GenAI',
+    ethics:'Limitations & Ethics',
+    privacy:'Privacy & Security'
+  },
+  claudedev: {
+    apps:'Applications & Integration',
+    model:'Model Selection & Optimization',
+    agents:'Agents & Workflows',
+    prompt:'Prompt & Context Engineering',
+    tools:'Tools & MCP',
+    security:'Security & Safety',
+    code:'Claude Code',
+    eval:'Eval, Testing & Debugging'
+  }
 };
 
 const SUBJECT_META = {
-  genai: { name:'Generative AI', tagline:'Foundations of modern AI-driven content creation — from LLMs to diffusion models.' }
+  genai: { name:'Generative AI', tagline:'Foundations of modern AI-driven content creation — from LLMs to diffusion models.',
+           examMinutes:45, passPct:60, historyKey:'geffen_study_exam_history' },
+  claudedev: { name:'Claude Certified Developer', tagline:'Exam prep for the CCDV-F — API mechanics, model selection, agents, tools & MCP, prompting, and safety.',
+           examMinutes:120, passPct:70, examCount:53, historyKey:'geffen_study_exam_history_claudedev' }
 };
 
-const EXAM_DURATION_SEC = 45*60;
-const PASS_PCT = 60;
-const HISTORY_KEY = 'geffen_study_exam_history';
+/* Per-subject exam/history config (fall back to legacy defaults). */
+const DEFAULT_EXAM_MIN = 45, DEFAULT_PASS_PCT = 60;
+function subjMeta(){ return SUBJECT_META[state.subject]; }
+function examDurationSec(){ return (subjMeta().examMinutes || DEFAULT_EXAM_MIN) * 60; }
+function passPct(){ return subjMeta().passPct || DEFAULT_PASS_PCT; }
+function examQuestionCount(){
+  const bank = QUESTIONS[state.subject];
+  const c = subjMeta().examCount;
+  return (c && c < bank.length) ? c : bank.length;
+}
+function historyKey(){ return subjMeta().historyKey || ('geffen_study_exam_history_' + state.subject); }
+function topicLabel(t){ return (TOPIC_LABELS[state.subject] && TOPIC_LABELS[state.subject][t]) || t; }
+
+const EXAM_DURATION_SEC = DEFAULT_EXAM_MIN*60; // initial default; actual duration is per-subject via examDurationSec()
 
 /* ================= STATE ================= */
 let state = {
@@ -858,9 +1376,9 @@ function esc(str){
   const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
 }
 function loadHistory(){
-  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }catch(e){ return []; }
+  try{ return JSON.parse(localStorage.getItem(historyKey())) || []; }catch(e){ return []; }
 }
-function saveHistory(list){ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
+function saveHistory(list){ localStorage.setItem(historyKey(), JSON.stringify(list)); }
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -919,7 +1437,7 @@ function renderHome(){
       <td>${esc(h.date)}</td>
       <td>${h.score}/${h.total}</td>
       <td>${h.percent}%</td>
-      <td><span class="pill ${h.percent>=PASS_PCT?'pass':'fail'}">${h.percent>=PASS_PCT?'Pass':'Fail'}</span></td>
+      <td><span class="pill ${h.percent>=passPct()?'pass':'fail'}">${h.percent>=passPct()?'Pass':'Fail'}</span></td>
       <td>${esc(h.duration)}</td>
     </tr>`).join('');
 
@@ -930,12 +1448,15 @@ function renderHome(){
     </div>
     <div class="panel ornate">
       <h3>Subjects</h3>
+      <p style="color:var(--ink-soft); font-size:0.88rem; margin-top:-4px;">Currently studying: <b>${esc(SUBJECT_META[state.subject].name)}</b>. Pick a subject to switch.</p>
       <div class="cards">
-        <div class="subject-card clickable" data-action="nav" data-view="study" style="cursor:pointer;">
-          <h3>${esc(SUBJECT_META.genai.name)}</h3>
-          <p>${esc(SUBJECT_META.genai.tagline)}</p>
-          <div class="stats"><span>${DOCS.genai.length} topics</span><span>${QUESTIONS.genai.length} questions</span></div>
-        </div>
+        ${Object.keys(SUBJECT_META).map(key=>`
+        <div class="subject-card clickable${key===state.subject?' current-subject':''}" data-action="select-subject" data-subject="${key}" style="cursor:pointer;">
+          ${key===state.subject?'<div class="ribbon" style="background:var(--success);">Active</div>':''}
+          <h3>${esc(SUBJECT_META[key].name)}</h3>
+          <p>${esc(SUBJECT_META[key].tagline)}</p>
+          <div class="stats"><span>${DOCS[key].length} topics</span><span>${QUESTIONS[key].length} questions</span></div>
+        </div>`).join('')}
         <div class="subject-card disabled">
           <div class="ribbon">Soon</div>
           <h3>Data Structures &amp; Algorithms</h3>
@@ -945,11 +1466,6 @@ function renderHome(){
           <div class="ribbon">Soon</div>
           <h3>Cloud Computing</h3>
           <p>Core concepts across compute, storage, and networking.</p>
-        </div>
-        <div class="subject-card disabled">
-          <div class="ribbon">Soon</div>
-          <h3>Cybersecurity Fundamentals</h3>
-          <p>Threats, defenses, and the basics of keeping systems safe.</p>
         </div>
       </div>
     </div>
@@ -1018,7 +1534,7 @@ function renderPracticeSetup(){
           <label>Topic</label>
           <select id="practiceTopicSelect">
             <option value="all" ${topic==='all'?'selected':''}>All Topics (${bank.length})</option>
-            ${Object.keys(TOPIC_LABELS).map(t=>`<option value="${t}" ${topic===t?'selected':''}>${esc(TOPIC_LABELS[t])} (${bank.filter(q=>q.topic===t).length})</option>`).join('')}
+            ${Object.keys(TOPIC_LABELS[state.subject]).map(t=>`<option value="${t}" ${topic===t?'selected':''}>${esc(topicLabel(t))} (${bank.filter(q=>q.topic===t).length})</option>`).join('')}
           </select>
         </div>
         <div class="config-field">
@@ -1066,7 +1582,7 @@ function renderPracticeRun(){
   return `
     <div class="panel ornate">
       <div class="question-progress">
-        <span>Question ${p.index+1} of ${total} &middot; ${esc(TOPIC_LABELS[q.topic])}</span>
+        <span>Question ${p.index+1} of ${total} &middot; ${esc(topicLabel(q.topic))}</span>
         <span class="score-tag">Score: ${p.score}/${p.index + (checked?1:0)}</span>
       </div>
       <div class="qbar"><div class="qbar-fill" style="width:${pct}%"></div></div>
@@ -1135,15 +1651,15 @@ function renderExamIntro(){
       <h3>${esc(SUBJECT_META[state.subject].name)} — Certification Exam</h3>
       <p style="color:var(--ink-soft);">A timed, proctored-style assessment covering all topics in the archive. This mimics a real online assessment: a fixed timer, a question navigator, and a locked-in final submission.</p>
       <ul class="rules-list">
-        <li>${bank.length} questions covering all topics</li>
-        <li>${Math.round(EXAM_DURATION_SEC/60)} minute time limit — the exam auto-submits when time expires</li>
+        <li>${examQuestionCount()} questions${examQuestionCount()<bank.length?` drawn from a pool of ${bank.length}`:''} covering all topics</li>
+        <li>${Math.round(examDurationSec()/60)} minute time limit — the exam auto-submits when time expires</li>
         <li>No negative marking: correct = +1, incorrect or unanswered = 0</li>
-        <li>Passing score: ${PASS_PCT}%</li>
+        <li>Passing score: ${passPct()}%</li>
         <li>You may navigate freely and change answers until you submit</li>
         <li>Switching tabs or minimizing the window will be flagged in an integrity log for this session</li>
         <li>Once submitted, answers are final and correct answers/explanations are revealed</li>
       </ul>
-      ${last ? `<div class="exam-summary-box">Last attempt: <b>${last.percent}%</b> (${last.score}/${last.total}) on ${esc(last.date)} &mdash; <span class="pill ${last.percent>=PASS_PCT?'pass':'fail'}">${last.percent>=PASS_PCT?'Pass':'Fail'}</span></div>` : ''}
+      ${last ? `<div class="exam-summary-box">Last attempt: <b>${last.percent}%</b> (${last.score}/${last.total}) on ${esc(last.date)} &mdash; <span class="pill ${last.percent>=passPct()?'pass':'fail'}">${last.percent>=passPct()?'Pass':'Fail'}</span></div>` : ''}
       <label class="agree-row">
         <input type="checkbox" id="agreeBox" ${state.exam.agreed?'checked':''} data-action="exam-agree-toggle">
         I have read and agree to the exam instructions above.
@@ -1213,7 +1729,7 @@ function renderExamRun(){
       <div class="exam-question-area">
         <div class="question-progress">
           <span>Question ${ex.index+1} of ${total}</span>
-          <span>${esc(TOPIC_LABELS[q.topic])}</span>
+          <span>${esc(topicLabel(q.topic))}</span>
         </div>
         <div class="question-text">${esc(q.text)}</div>
         <div class="options">${optionsHtml}</div>
@@ -1250,7 +1766,7 @@ function renderExamSummary(){
   let score = 0;
   ex.questions.forEach((q,i)=>{ if(ex.answers[i] === q.correct) score++; });
   const pct = Math.round(score/total*100);
-  const pass = pct >= PASS_PCT;
+  const pass = pct >= passPct();
 
   const topicStats = {};
   ex.questions.forEach((q,i)=>{
@@ -1263,7 +1779,7 @@ function renderExamSummary(){
     const s = topicStats[t];
     const p = Math.round(s.correct/s.total*100);
     return `<div class="topic-bar-row">
-      <div class="label">${esc(TOPIC_LABELS[t])}</div>
+      <div class="label">${esc(topicLabel(t))}</div>
       <div class="topic-bar-track"><div class="topic-bar-fill" style="width:${p}%"></div></div>
       <div class="pct">${p}%</div>
     </div>`;
@@ -1341,7 +1857,7 @@ function submitExam(auto){
   ex.questions.forEach((q,i)=>{ if(ex.answers[i]===q.correct) score++; });
   const total = ex.questions.length;
   const percent = Math.round(score/total*100);
-  const elapsed = EXAM_DURATION_SEC - ex.timeLeft;
+  const elapsed = examDurationSec() - ex.timeLeft;
   ex.finishedSeconds = elapsed;
   ex.submitted = true;
   ex.showModal = false;
@@ -1371,9 +1887,21 @@ function handleAction(action, el){
       render();
       break;
     }
+    case 'select-subject': {
+      const subj = el.dataset.subject;
+      if(!subj || !SUBJECT_META[subj]) break;
+      if(state.view === 'exam-run' && !state.exam.submitted){ stopExamTimer(); }
+      state.subject = subj;
+      state.study.topic = DOCS[subj][0].id;   // topic keys differ per subject — reset to first doc
+      state.practice.topic = 'all';
+      resetExam();
+      state.view = 'study';
+      render();
+      break;
+    }
     case 'reset-history': {
       if(confirm('Clear all saved exam history from this browser?')){
-        localStorage.removeItem(HISTORY_KEY);
+        localStorage.removeItem(historyKey());
         render();
       }
       break;
@@ -1452,9 +1980,9 @@ function handleAction(action, el){
     case 'exam-start': {
       resetExam();
       state.exam.agreed = true;
-      state.exam.questions = prepareQuestions(QUESTIONS[state.subject], 'all', QUESTIONS[state.subject].length);
+      state.exam.questions = prepareQuestions(QUESTIONS[state.subject], 'all', examQuestionCount());
       state.exam.index = 0;
-      state.exam.timeLeft = EXAM_DURATION_SEC;
+      state.exam.timeLeft = examDurationSec();
       state.exam.visited.add(0);
       state.view = 'exam-run';
       render();
