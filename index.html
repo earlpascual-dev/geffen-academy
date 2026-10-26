@@ -182,6 +182,13 @@
     padding:12px 16px; border-radius:6px; font-size:0.88rem; color:var(--ink-soft);
   }
   .archive-note b{color:var(--purple);}
+  .doc-content code{font-family:ui-monospace,"Cascadia Code","Consolas",monospace; font-size:0.85em; background:var(--parchment-dark); padding:1px 5px; border-radius:4px; color:var(--purple-dark);}
+  .doc-content pre{background:#2a2140; color:#f3eefc; padding:14px 16px; border-radius:8px; overflow-x:auto; margin:12px 0; border:1px solid var(--gold-dark); line-height:1.5;}
+  .doc-content pre code{background:none; color:inherit; padding:0; font-size:0.82rem; white-space:pre;}
+  .doc-content a{color:var(--purple); font-weight:600; text-decoration:underline; text-underline-offset:2px;}
+  .doc-content a:hover{color:var(--gold-dark);}
+  .why-note{margin:16px 0; background:linear-gradient(180deg,var(--parchment-dark),#fff); border:1px solid var(--gold); border-left:4px solid var(--purple); padding:14px 18px; border-radius:8px;}
+  .why-note b{color:var(--purple-dark);}
   .doc-nav{display:flex; justify-content:space-between; margin-top:22px; padding-top:16px; border-top:1px solid var(--parchment-dark);}
 
   /* ---------- Practice / Exam shared ---------- */
@@ -464,6 +471,20 @@ const DOCS = {
     `},
   ],
   claudedev: [
+    { id:'cc-why', title:'Why This Certification', html:`
+      <p>Before the mechanics, the honest case for <i>why</i> this exam is worth your time — and where it isn't a magic bullet.</p>
+      <p><b>What it actually proves.</b> The CCDV-F certifies that you can <i>design, build, and operate production applications on Claude</i> — not that you can chat with an AI. It forces you to learn the whole platform end to end: the Messages API, agents and workflows, tool use and MCP, prompt/context engineering, cost and model trade-offs, and the security practices that keep an LLM app safe. That breadth is the real value: most developers pick up fragments of this on the job; the exam makes you learn the parts you'd otherwise skip.</p>
+      <p><b>Why it matters for your career right now.</b> "Can build real software" is table stakes for a senior engineer. "Can build real software <i>with LLMs, safely and cost-effectively</i>" is the skill companies are scrambling to hire for in 2026, and far fewer engineers can prove it. For someone targeting senior full-stack / tech-lead roles, this credential does three concrete things:</p>
+      <ul>
+        <li><b>Signals competence to hiring managers</b> who can't easily verify AI-engineering skill from a résumé — a vendor-recognized, Pearson VUE-proctored credential is a credible shortcut.</li>
+        <li><b>Differentiates you</b> in a stack of full-stack candidates who all list "React, Node, AWS." Few will list a Claude developer cert.</li>
+        <li><b>Gives you the vocabulary and mental models</b> to lead AI features — scoping an agent vs a workflow, estimating token cost, defending against prompt injection — which is exactly what a tech lead is asked to do when a team adds AI.</li>
+      </ul>
+      <p><b>Why it's worth doing even if you never framed the certificate.</b> The study itself upgrades you. After this you'll reach for the right tier (single call → workflow → agent) instead of over-engineering, cache prompts instead of burning tokens, and treat retrieved content as untrusted by reflex. Those habits pay off on every LLM project, certificate or not.</p>
+      <div class="why-note"><b>The honest caveat.</b> A certification is a <i>door-opener and a forcing function, not a substitute for building things.</i> It's also a newer credential than, say, AWS certs, so its market recognition is still growing — you're an early mover. Pair it with real projects you can show (you already have several) and it becomes evidence; on its own it's just a line item. Study to <i>learn</i>, and the paper takes care of itself.</div>
+      <p><b>So: do you "need" it?</b> Strictly, no — nobody needs any cert. But if you're actively job-hunting for senior/lead roles and want a cost-effective way to both <i>level up</i> on the most in-demand skill of the moment <i>and</i> prove it, this is one of the higher-leverage things you can spend a few focused weeks on. That's the case. Now let's make sure you pass it.</p>
+      <div class="archive-note"><b>Archive Note:</b> Treat the certificate as the <i>byproduct</i> of genuinely learning to build on Claude. Everything else in these archives is organized to get you there — read the docs, drill the questions, simulate the exam, and consult the official Anthropic documentation (see the "Official Docs" reading list) as the source of truth.</div>
+    `},
     { id:'cc-exam', title:'The Exam & How to Study', html:`
       <p>The <b>Claude Certified Developer — Foundations (CCDV-F)</b> validates that you can design, build, and operate production applications on Claude. It is a knowledge exam, not a coding test — but it assumes you have actually built with the Claude API.</p>
       <ul>
@@ -636,6 +657,167 @@ const DOCS = {
       </ul>
       <p><b>Error handling:</b> catch <b>specific</b> SDK exception types, not one broad class. Retry transient failures — <b>429 (rate limit)</b> and <b>5xx</b> — with backoff; do <b>not</b> retry <b>4xx</b> like 400/404 (they won't succeed on retry). Return tool failures as <code>tool_result</code> with <code>is_error: true</code> so the model can recover.</p>
       <div class="archive-note"><b>Archive Note:</b> Observability (e.g. OpenTelemetry tracing, logging <code>response.usage</code>) turns production behavior into data you can debug and cost-optimize against — but it needs a backend you run, so add it once you have real traffic.</div>
+    `},
+    { id:'cc-examples', title:'Worked Examples — API Patterns', html:`
+      <p>Concrete patterns for the mechanics the exam tests. These are illustrative (Python SDK); the exact field names and newest options always live in the official docs linked at the bottom of each block — treat those as the source of truth.</p>
+
+      <h3>1 · A basic request</h3>
+      <p>Everything is <code>POST /v1/messages</code>. The <code>system</code> prompt is a top-level field; <code>messages</code> is the conversation; <code>max_tokens</code> caps the output.</p>
+      <pre><code>from anthropic import Anthropic
+client = Anthropic()  # reads ANTHROPIC_API_KEY
+
+resp = client.messages.create(
+    model="claude-sonnet-5-5",
+    max_tokens=1024,
+    system="You are a concise technical assistant.",
+    messages=[{"role": "user", "content": "Explain tokens in one sentence."}],
+)
+print(resp.content[0].text)
+print(resp.stop_reason)   # "end_turn" | "max_tokens" | "tool_use" | "refusal" | ...
+print(resp.usage)         # input/output tokens, cache reads</code></pre>
+
+      <h3>2 · The tool-use loop</h3>
+      <p>Define a tool with an <code>input_schema</code>. Claude replies with a <code>tool_use</code> block; <i>you</i> run the function and return a <code>tool_result</code> in a <b>user</b> message; repeat until <code>end_turn</code>.</p>
+      <pre><code>tools = [{
+  "name": "get_weather",
+  "description": "Get current weather for a city.",
+  "input_schema": {
+    "type": "object",
+    "properties": {"city": {"type": "string"}},
+    "required": ["city"], "additionalProperties": False
+  },
+  "strict": True    # guarantees input validates exactly against the schema
+}]
+
+msgs = [{"role": "user", "content": "What's the weather in Manila?"}]
+resp = client.messages.create(model="claude-sonnet-5-5", max_tokens=1024,
+                              tools=tools, messages=msgs)
+
+while resp.stop_reason == "tool_use":
+    msgs.append({"role": "assistant", "content": resp.content})
+    results = []
+    for block in resp.content:
+        if block.type == "tool_use":
+            try:
+                out = run_tool(block.name, block.input)   # your code
+                results.append({"type": "tool_result", "tool_use_id": block.id,
+                                "content": out})
+            except Exception as e:
+                results.append({"type": "tool_result", "tool_use_id": block.id,
+                                "content": str(e), "is_error": True})
+    msgs.append({"role": "user", "content": results})   # ALL results in ONE message
+    resp = client.messages.create(model="claude-sonnet-5-5", max_tokens=1024,
+                                  tools=tools, messages=msgs)</code></pre>
+      <p><b>Why this shape:</b> returning all parallel <code>tool_result</code> blocks in a single user message keeps parallel tool use working; <code>is_error: True</code> lets the model recover instead of crashing.</p>
+
+      <h3>3 · Prompt caching</h3>
+      <p>Mark the end of stable content with <code>cache_control</code>. Stable-first, volatile-last. Verify with <code>usage.cache_read_input_tokens</code>.</p>
+      <pre><code>resp = client.messages.create(
+    model="claude-sonnet-5-5", max_tokens=512,
+    system=[{
+        "type": "text",
+        "text": LONG_STABLE_INSTRUCTIONS_AND_REFERENCE_DOCS,
+        "cache_control": {"type": "ephemeral"}    # cache everything up to here
+    }],
+    messages=[{"role": "user", "content": todays_question}],  # volatile → after the breakpoint
+)
+assert resp.usage.cache_read_input_tokens > 0   # 0 = a silent invalidator broke the prefix</code></pre>
+
+      <h3>4 · Structured outputs (reliable JSON)</h3>
+      <p>Constrain the response to a schema with <code>output_config.format</code> instead of parsing JSON out of prose. (Assistant prefill is removed on current models — use this.)</p>
+      <pre><code>resp = client.messages.create(
+    model="claude-sonnet-5-5", max_tokens=1024,
+    output_config={"format": {
+        "type": "json_schema",
+        "schema": {"type": "object",
+                   "properties": {"sentiment": {"type": "string"},
+                                  "score": {"type": "number"}},
+                   "required": ["sentiment", "score"]}
+    }},
+    messages=[{"role": "user", "content": "Classify: 'I love this!'"}],
+)</code></pre>
+
+      <h3>5 · Streaming (long outputs)</h3>
+      <pre><code>with client.messages.stream(
+    model="claude-sonnet-5-5", max_tokens=8000,
+    messages=[{"role": "user", "content": "Write a detailed design doc."}],
+) as stream:
+    for text in stream.text_stream:
+        print(text, end="")
+    final = stream.get_final_message()   # full assembled response</code></pre>
+      <p>Use streaming for large <code>max_tokens</code> so a long generation doesn't hit the HTTP timeout.</p>
+
+      <h3>6 · Batch (async, ~50% cost)</h3>
+      <pre><code>batch = client.messages.batches.create(requests=[
+    {"custom_id": "req-1", "params": {...}},
+    {"custom_id": "req-2", "params": {...}},
+])
+# poll batches.retrieve(batch.id).processing_status until "ended",
+# then stream results and key them by custom_id (order is NOT guaranteed).</code></pre>
+
+      <h3>7 · Robust error handling</h3>
+      <pre><code>import anthropic
+try:
+    resp = client.messages.create(...)
+except anthropic.NotFoundError:      # 404 — do NOT retry
+    ...
+except anthropic.RateLimitError:     # 429 — retry with backoff
+    ...
+except anthropic.APIStatusError as e:
+    if e.status_code >= 500: ...      # retry
+    else: ...                        # 4xx — fix the request</code></pre>
+      <div class="archive-note"><b>Archive Note:</b> The SDK retries 408/409/429/5xx + connection errors by default. Catch specific exception types (most-specific first), not one broad class, so you don't retry a deterministic 400/404.</div>
+    `},
+    { id:'cc-reading', title:'Official Docs — Reading List', html:`
+      <p>Anthropic's official documentation is the <b>source of truth</b> — use it to confirm every exact parameter, limit, and current behavior (the API changes, so a doc beats any course or these notes for precise syntax). All links are on <code>platform.claude.com</code>. Read them grouped by exam domain.</p>
+
+      <p><b>Applications & Integration (33%)</b></p>
+      <ul>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/streaming" target="_blank" rel="noopener">Streaming</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/batch-processing" target="_blank" rel="noopener">Batch Processing</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/files" target="_blank" rel="noopener">Files API</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching" target="_blank" rel="noopener">Prompt Caching</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/vision" target="_blank" rel="noopener">Vision</a> · <a href="https://platform.claude.com/docs/en/build-with-claude/pdf-support" target="_blank" rel="noopener">PDF Support</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/compaction" target="_blank" rel="noopener">Compaction</a> · <a href="https://platform.claude.com/docs/en/build-with-claude/context-editing" target="_blank" rel="noopener">Context Editing</a></li>
+        <li><a href="https://platform.claude.com/docs/en/api/errors" target="_blank" rel="noopener">API Errors</a> · <a href="https://platform.claude.com/docs/en/api/rate-limits" target="_blank" rel="noopener">Rate Limits</a></li>
+      </ul>
+
+      <p><b>Model Selection & Optimization (17%)</b></p>
+      <ul>
+        <li><a href="https://platform.claude.com/docs/en/about-claude/models/overview" target="_blank" rel="noopener">Models Overview</a> · <a href="https://platform.claude.com/docs/en/about-claude/pricing" target="_blank" rel="noopener">Pricing</a></li>
+        <li><a href="https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence" target="_blank" rel="noopener">Optimizing for Cost & Intelligence</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking" target="_blank" rel="noopener">Adaptive Thinking</a> · <a href="https://platform.claude.com/docs/en/build-with-claude/effort" target="_blank" rel="noopener">Effort</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/token-counting" target="_blank" rel="noopener">Token Counting</a> · <a href="https://platform.claude.com/docs/en/build-with-claude/context-windows" target="_blank" rel="noopener">Context Windows</a></li>
+      </ul>
+
+      <p><b>Agents & Workflows (15%)</b></p>
+      <ul>
+        <li><a href="https://platform.claude.com/docs/en/managed-agents/overview" target="_blank" rel="noopener">Managed Agents Overview</a> · <a href="https://platform.claude.com/docs/en/managed-agents/quickstart" target="_blank" rel="noopener">Quickstart</a></li>
+        <li><a href="https://platform.claude.com/docs/en/managed-agents/define-outcomes" target="_blank" rel="noopener">Define Outcomes</a> · <a href="https://platform.claude.com/docs/en/managed-agents/multiagent-orchestration" target="_blank" rel="noopener">Multi-Agent Orchestration</a></li>
+      </ul>
+
+      <p><b>Prompt & Context Engineering (11%)</b></p>
+      <ul>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/structured-outputs" target="_blank" rel="noopener">Structured Outputs</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/citations" target="_blank" rel="noopener">Citations</a></li>
+        <li><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching" target="_blank" rel="noopener">Prompt Caching</a> (context ordering)</li>
+      </ul>
+
+      <p><b>Tools & MCP (11%)</b></p>
+      <ul>
+        <li><a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview" target="_blank" rel="noopener">Tool Use Overview</a></li>
+        <li><a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/code-execution-tool" target="_blank" rel="noopener">Code Execution</a> · <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/bash-tool" target="_blank" rel="noopener">Bash</a> · <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/text-editor-tool" target="_blank" rel="noopener">Text Editor</a></li>
+        <li><a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview" target="_blank" rel="noopener">Agent Skills</a></li>
+        <li><a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener">Model Context Protocol (MCP) spec</a></li>
+      </ul>
+
+      <p><b>Security & Safety (8%) · Claude Code (3%) · Eval & Debugging (3%)</b></p>
+      <ul>
+        <li><a href="https://platform.claude.com/docs/en/api/errors" target="_blank" rel="noopener">Errors & retry guidance</a></li>
+        <li><a href="https://docs.claude.com/en/docs/claude-code/overview" target="_blank" rel="noopener">Claude Code docs</a> (CLAUDE.md, permissions, hooks, MCP, subagents)</li>
+        <li>Anthropic's prompt-engineering and safety guides under <a href="https://platform.claude.com/docs/" target="_blank" rel="noopener">platform.claude.com/docs</a></li>
+      </ul>
+      <div class="archive-note"><b>Archive Note:</b> If a link ever 404s, Anthropic reorganized the docs — start at <a href="https://platform.claude.com/docs/" target="_blank" rel="noopener">platform.claude.com/docs</a> and search. And confirm the exam blueprint itself on Anthropic's Partner Academy, which is the official word on domains and logistics.</div>
     `},
   ]
 };
